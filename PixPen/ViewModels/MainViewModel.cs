@@ -191,9 +191,15 @@ public class MainViewModel : ViewModelBase
             Title = "開く"
         };
         if (dlg.ShowDialog() != true) return;
+        OpenFile(dlg.FileName);
+    }
+
+    /// <summary>指定パスの .ppx を新しいタブで開く（ドラッグ＆ドロップからも使用）</summary>
+    public void OpenFile(string path)
+    {
         try
         {
-            var doc = _fileService.Load(dlg.FileName);
+            var doc = _fileService.Load(path);
             AddTab(doc);
         }
         catch (Exception ex)

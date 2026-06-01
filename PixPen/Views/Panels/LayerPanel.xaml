@@ -18,6 +18,7 @@
                  AllowDrop="True"
                  Drop="OnDrop"
                  DragOver="OnDragOver"
+                 PreviewMouseLeftButtonDown="OnPreviewMouseLeftButtonDown"
                  PreviewMouseMove="OnPreviewMouseMove">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="{x:Type vm:LayerViewModel}">
@@ -30,7 +31,8 @@
 
                         <!-- 表示切り替え -->
                         <CheckBox Grid.Column="0"
-                                  IsChecked="{Binding IsVisible}"
+                                  IsChecked="{Binding IsVisible, Mode=TwoWay}"
+                                  Click="OnVisibilityClick"
                                   VerticalAlignment="Center"
                                   HorizontalAlignment="Center"
                                   ToolTip="表示・非表示"/>

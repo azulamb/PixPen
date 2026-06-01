@@ -21,10 +21,32 @@ public class ColorPalettePanelViewModel : ViewModelBase
             {
                 _palette.ForegroundColor = ColorHelper.ToArgbHex(value);
                 UpdateHsv(value);
+                // RGB も同期
+                OnPropertyChanged(nameof(R));
+                OnPropertyChanged(nameof(G));
+                OnPropertyChanged(nameof(B));
             }
         }
     }
 
+    // ─── RGB ────────────────────────────────────────────────────────────────
+    public byte R
+    {
+        get => _foreground.R;
+        set { if (_foreground.R != value) Foreground = Color.FromArgb(_alpha, value, _foreground.G, _foreground.B); }
+    }
+    public byte G
+    {
+        get => _foreground.G;
+        set { if (_foreground.G != value) Foreground = Color.FromArgb(_alpha, _foreground.R, value, _foreground.B); }
+    }
+    public byte B
+    {
+        get => _foreground.B;
+        set { if (_foreground.B != value) Foreground = Color.FromArgb(_alpha, _foreground.R, _foreground.G, value); }
+    }
+
+    // ─── HSV ────────────────────────────────────────────────────────────────
     private double _hue, _saturation, _brightness;
     public double Hue { get => _hue; set { SetField(ref _hue, value); UpdateFromHsv(); } }
     public double Saturation { get => _saturation; set { SetField(ref _saturation, value); UpdateFromHsv(); } }
@@ -54,6 +76,9 @@ public class ColorPalettePanelViewModel : ViewModelBase
         _alpha = _foreground.A;
         OnPropertyChanged(nameof(Foreground));
         OnPropertyChanged(nameof(Alpha));
+        OnPropertyChanged(nameof(R));
+        OnPropertyChanged(nameof(G));
+        OnPropertyChanged(nameof(B));
         UpdateHsv(_foreground);
     }
 

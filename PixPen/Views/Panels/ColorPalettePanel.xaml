@@ -3,10 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid>
         <Grid.ColumnDefinitions>
-            <!-- 左：カラー一覧（スウォッチ26px + 余白4px + スクロールバー約17px） -->
             <ColumnDefinition Width="52" MinWidth="46"/>
             <ColumnDefinition Width="4"/>
-            <!-- 右：編集エリア -->
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
@@ -51,56 +49,103 @@
                       Background="#FF555555" ResizeBehavior="PreviousAndNext"/>
 
         <!-- ─── 編集エリア（右） ───────────────────────────────────────── -->
-        <Grid Grid.Column="2" Margin="4,4,2,4">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="28"/>  <!-- カラープレビュー -->
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="14"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="40"/>
-            </Grid.ColumnDefinitions>
+        <DockPanel Grid.Column="2" Margin="2">
 
-            <!-- カラープレビュー -->
-            <Rectangle Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"
-                       Margin="0,0,0,4" RadiusX="2" RadiusY="2"
+            <!-- カラープレビュー（常に表示） -->
+            <Rectangle DockPanel.Dock="Top" Height="26" Margin="2,2,2,2"
+                       RadiusX="2" RadiusY="2"
                        Stroke="#FF888888" StrokeThickness="1">
                 <Rectangle.Fill>
                     <SolidColorBrush Color="{Binding ColorPanel.Foreground}"/>
                 </Rectangle.Fill>
             </Rectangle>
 
-            <!-- H -->
-            <TextBlock Grid.Row="1" Text="H" VerticalAlignment="Center" FontSize="10"/>
-            <Slider Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="360"
-                    Value="{Binding ColorPanel.Hue}" Margin="2,1" VerticalAlignment="Center"/>
-            <TextBox Grid.Row="1" Grid.Column="2" FontSize="10" Margin="2,1"
-                     Text="{Binding ColorPanel.Hue, StringFormat=F0, UpdateSourceTrigger=LostFocus}"/>
+            <!-- 指定方法タブ -->
+            <TabControl>
 
-            <!-- S -->
-            <TextBlock Grid.Row="2" Text="S" VerticalAlignment="Center" FontSize="10"/>
-            <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="1"
-                    Value="{Binding ColorPanel.Saturation}" Margin="2,1" VerticalAlignment="Center"/>
-            <TextBox Grid.Row="2" Grid.Column="2" FontSize="10" Margin="2,1"
-                     Text="{Binding ColorPanel.Saturation, StringFormat=F2, UpdateSourceTrigger=LostFocus}"/>
+                <!-- ─── RGB（デフォルト） ─── -->
+                <TabItem Header="RGB">
+                    <Grid Margin="2,4,2,2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="14"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="40"/>
+                        </Grid.ColumnDefinitions>
 
-            <!-- V -->
-            <TextBlock Grid.Row="3" Text="V" VerticalAlignment="Center" FontSize="10"/>
-            <Slider Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="1"
-                    Value="{Binding ColorPanel.Brightness}" Margin="2,1" VerticalAlignment="Center"/>
-            <TextBox Grid.Row="3" Grid.Column="2" FontSize="10" Margin="2,1"
-                     Text="{Binding ColorPanel.Brightness, StringFormat=F2, UpdateSourceTrigger=LostFocus}"/>
+                        <TextBlock Grid.Row="0" Text="R" VerticalAlignment="Center" FontSize="10"/>
+                        <Slider Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="255"
+                                Value="{Binding ColorPanel.R}" Margin="2,1" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="0" Grid.Column="2" FontSize="10" Margin="2,1"
+                                 Text="{Binding ColorPanel.R, UpdateSourceTrigger=LostFocus}"/>
 
-            <!-- A -->
-            <TextBlock Grid.Row="4" Text="A" VerticalAlignment="Center" FontSize="10"/>
-            <Slider Grid.Row="4" Grid.Column="1" Minimum="0" Maximum="255"
-                    Value="{Binding ColorPanel.Alpha}" Margin="2,1" VerticalAlignment="Center"/>
-            <TextBox Grid.Row="4" Grid.Column="2" FontSize="10" Margin="2,1"
-                     Text="{Binding ColorPanel.Alpha, UpdateSourceTrigger=LostFocus}"/>
-        </Grid>
+                        <TextBlock Grid.Row="1" Text="G" VerticalAlignment="Center" FontSize="10"/>
+                        <Slider Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="255"
+                                Value="{Binding ColorPanel.G}" Margin="2,1" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="1" Grid.Column="2" FontSize="10" Margin="2,1"
+                                 Text="{Binding ColorPanel.G, UpdateSourceTrigger=LostFocus}"/>
+
+                        <TextBlock Grid.Row="2" Text="B" VerticalAlignment="Center" FontSize="10"/>
+                        <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="255"
+                                Value="{Binding ColorPanel.B}" Margin="2,1" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="2" Grid.Column="2" FontSize="10" Margin="2,1"
+                                 Text="{Binding ColorPanel.B, UpdateSourceTrigger=LostFocus}"/>
+
+                        <TextBlock Grid.Row="3" Text="A" VerticalAlignment="Center" FontSize="10"/>
+                        <Slider Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="255"
+                                Value="{Binding ColorPanel.Alpha}" Margin="2,1" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="3" Grid.Column="2" FontSize="10" Margin="2,1"
+                                 Text="{Binding ColorPanel.Alpha, UpdateSourceTrigger=LostFocus}"/>
+                    </Grid>
+                </TabItem>
+
+                <!-- ─── HSV ─── -->
+                <TabItem Header="HSV">
+                    <Grid Margin="2,4,2,2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="14"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="40"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="H" VerticalAlignment="Center" FontSize="10"/>
+                        <Slider Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="360"
+                                Value="{Binding ColorPanel.Hue}" Margin="2,1" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="0" Grid.Column="2" FontSize="10" Margin="2,1"
+                                 Text="{Binding ColorPanel.Hue, StringFormat=F0, UpdateSourceTrigger=LostFocus}"/>
+
+                        <TextBlock Grid.Row="1" Text="S" VerticalAlignment="Center" FontSize="10"/>
+                        <Slider Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="1"
+                                Value="{Binding ColorPanel.Saturation}" Margin="2,1" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="1" Grid.Column="2" FontSize="10" Margin="2,1"
+                                 Text="{Binding ColorPanel.Saturation, StringFormat=F2, UpdateSourceTrigger=LostFocus}"/>
+
+                        <TextBlock Grid.Row="2" Text="V" VerticalAlignment="Center" FontSize="10"/>
+                        <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="1"
+                                Value="{Binding ColorPanel.Brightness}" Margin="2,1" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="2" Grid.Column="2" FontSize="10" Margin="2,1"
+                                 Text="{Binding ColorPanel.Brightness, StringFormat=F2, UpdateSourceTrigger=LostFocus}"/>
+
+                        <TextBlock Grid.Row="3" Text="A" VerticalAlignment="Center" FontSize="10"/>
+                        <Slider Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="255"
+                                Value="{Binding ColorPanel.Alpha}" Margin="2,1" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="3" Grid.Column="2" FontSize="10" Margin="2,1"
+                                 Text="{Binding ColorPanel.Alpha, UpdateSourceTrigger=LostFocus}"/>
+                    </Grid>
+                </TabItem>
+
+            </TabControl>
+        </DockPanel>
     </Grid>
 </UserControl>

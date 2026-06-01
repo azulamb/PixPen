@@ -8,12 +8,38 @@ namespace PixPen.Views.Panels;
 public partial class LayerPanel : UserControl
 {
     private LayerViewModel? _dragSource;
+    private Point _dragStartPoint;
 
     public LayerPanel() => InitializeComponent();
+
+    // チェックボックスのクリックを ListBox に横取りさせない
+    private void OnVisibilityClick(object sender, RoutedEventArgs e)
+    {
+        e.Handled = true;
+
+        // IsChecked の変化は TwoWay バインディングで LayerViewModel.IsVisible に反映済み。
+        // ここで明示的に再合成して表示に反映する。
+        if (DataContext is CanvasTabViewModel tab)
+            tab.RecompositeAll();
+    }
+
+    // ドラッグ開始位置を記録
+    private void OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        _dragStartPoint = e.GetPosition(null);
+    }
 
     private void OnPreviewMouseMove(object sender, MouseEventArgs e)
     {
         if (e.LeftButton != MouseButtonState.Pressed) return;
+
+        // 閾値（SystemParameters.MinimumHorizontalDragDistance 等）を超えた場合のみドラッグ開始
+        // これによりチェックボックスのクリックがドラッグと誤認識されなくなる
+        var current = e.GetPosition(null);
+        var diff = current - _dragStartPoint;
+        if (Math.Abs(diff.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(diff.Y) < SystemParameters.MinimumVerticalDragDistance) return;
+
         if (sender is ListBox lb && lb.SelectedItem is LayerViewModel lvm)
         {
             _dragSource = lvm;
