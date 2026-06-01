@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          $xml = [xml](Get-Content 'PixPen/PixPen.csproj')
+          $v = $xml.Project.PropertyGroup.Version
+          echo "value=$v" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
+      - name: Create ZIP
+        run: Compress-Archive -Path bin/* -DestinationPath PixPen-v${{ steps.version.outputs.value }}.zip
+        shell: pwsh
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.value }}
+          name: v${{ steps.version.outputs.value }}
+          generate_release_notes: true
+          files: PixPen-v${{ steps.version.outputs.value }}.zip
