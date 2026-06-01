@@ -5,7 +5,20 @@ const EXE = `${OUT_DIR}/PixPen.exe`;
 // 1. Publish release build to bin/
 console.log("Publishing release...");
 const build = await new Deno.Command("dotnet", {
-  args: ["publish", PROJECT, "-c", "Release", "-o", OUT_DIR],
+  args: [
+    "publish",
+    PROJECT,
+    "-c",
+    "Release",
+    "-r",
+    "win-x64",
+    "--self-contained",
+    "false",
+    "/p:PublishSingleFile=true",
+    "/p:EnableCompressionInSingleFile=true",
+    "-o",
+    OUT_DIR,
+  ],
   stdout: "inherit",
   stderr: "inherit",
 }).output();
