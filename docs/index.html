@@ -48,7 +48,49 @@
       footer {
         text-align: center;
       }
+      dialog {
+        border: none;
+        padding: 0;
+        background: none;
+      }
+      dialog::backdrop {
+        background: rgba(0, 0, 0, 0.5);
+      }
+      img {
+        display: block;
+      }
+      img.preview {
+        cursor: zoom-in;
+      }
+      p {
+        margin: 0;
+        padding: 0;
+      }
     </style>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const preview = document.getElementById("preview");
+        preview.addEventListener("click", () => {
+          preview.close();
+        });
+        const imgs = document.querySelectorAll(".preview");
+        imgs.forEach((img) => {
+          img.addEventListener("click", () => {
+            if (preview.open) {
+              preview.close();
+            } else {
+              const clone = img.cloneNode();
+              clone.style.width = "100%";
+              clone.style.height = "100%";
+              clone.classList.remove("preview");
+              preview.innerHTML = "";
+              preview.appendChild(clone);
+              preview.showModal();
+          }
+        });
+      });
+    });
+    </script>
   </head>
   <body>
     <header></header>
@@ -58,9 +100,13 @@
         <a href="https://github.com/azulamb/PixPen">GitHub</a>
         <a href="https://github.com/azulamb/PixPen/releases">Download</a>
       </dl>
+      <p>PixPenはシンプルなお絵かきツールです。</p>
+      <p>アンチエイリアスなしのイラストを描けます。完全に個人のイラスト練習用なので機能は多くない代わりに軽量に動きます。</p>
+      <img src="./ss.png" alt="A screenshot of PixPen" class="preview">
     </article>
     <footer>
         <small>&copy; 2026 Hiroki. All rights reserved.</small>
     </footer>
+    <dialog id="preview"></dialog>
   </body>
 </html>
