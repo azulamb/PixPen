@@ -22,12 +22,14 @@
         margin: 1rem 0 0;
         background: url(./icon.svg) center center no-repeat;
       }
+      h1, h2 {
+        margin: 0;
+        padding: 0;
+      }
       h1 {
         font-size: 1rem;
         line-height: 2rem;
         text-align: center;
-        margin: 0;
-        padding: 0;
       }
       article {
         display: flex;
@@ -37,13 +39,16 @@
         gap: 0.4rem;
       }
       article > * {
-        max-width: 20rem;
+        max-width: 22rem;
       }
-      dl {
-        display: flex;
-        gap: 0.8rem;
+      ul, dl {
         padding: 0;
         margin: 0;
+      }
+      ul {
+        display: flex;
+        gap: 0.8rem;
+        list-style: none;
       }
       footer {
         text-align: center;
@@ -96,13 +101,22 @@
     <header></header>
     <article>
       <h1>PixPen</h1>
-      <dl>
-        <a href="https://github.com/azulamb/PixPen">GitHub</a>
-        <a href="https://github.com/azulamb/PixPen/releases">Download</a>
-      </dl>
+      <ul>
+        <li><a href="https://github.com/azulamb/PixPen">GitHub</a></li>
+        <li><a href="https://github.com/azulamb/PixPen/releases">Download</a></li>
+      </ul>
       <p>PixPenはシンプルなお絵かきツールです。</p>
       <p>アンチエイリアスなしのイラストを描けます。完全に個人のイラスト練習用なので機能は多くない代わりに軽量に動きます。</p>
       <img src="./ss.png" alt="A screenshot of PixPen" class="preview">
+      <h2>動作環境</h2>
+      <dl>
+        <dt>OS</dt>
+        <dd>Windows 11 以降</dd>
+        <dt>CPU</dt>
+        <dd>64bit</dd>
+        <dt>Runtime</dt>
+        <dd>.NET 10 以降</dd>
+      </dl>
     </article>
     <footer>
         <small>&copy; 2026 Hiroki. All rights reserved.</small>
