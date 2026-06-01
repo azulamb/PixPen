@@ -1,0 +1,66 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>PixPen</title>
+    <meta name="description" content="PixPen is a simple drawing application.">
+    <link rel="shortcut icon" href="./favicon.ico">
+    <style>
+      html {
+        height: 100%;
+        font-size: 3vmin;
+      }
+      body {
+        height: 100%;
+        margin: 0;
+        display: grid;
+        grid-template-rows: 4rem auto 2rem;
+      }
+      header {
+        box-sizing: border-box;
+        margin: 1rem 0 0;
+        background: url(./icon.svg) center center no-repeat;
+      }
+      h1 {
+        font-size: 1rem;
+        line-height: 2rem;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+      }
+      article {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.4rem;
+      }
+      article > * {
+        max-width: 20rem;
+      }
+      dl {
+        display: flex;
+        gap: 0.8rem;
+        padding: 0;
+        margin: 0;
+      }
+      footer {
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <header></header>
+    <article>
+      <h1>PixPen</h1>
+      <dl>
+        <a href="https://github.com/azulamb/PixPen">GitHub</a>
+        <a href="https://github.com/azulamb/PixPen/releases">Download</a>
+      </dl>
+    </article>
+    <footer>
+        <small>&copy; 2026 Hiroki. All rights reserved.</small>
+    </footer>
+  </body>
+</html>

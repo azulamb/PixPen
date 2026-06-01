@@ -1,0 +1,57 @@
+<UserControl x:Class="PixPen.Views.Panels.LayerPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:PixPen.ViewModels">
+    <DockPanel>
+        <!-- ツールバー -->
+        <ToolBar DockPanel.Dock="Bottom" ToolBarTray.IsLocked="True">
+            <Button Content="＋" Command="{Binding LayerPanel.AddLayerCommand}" ToolTip="レイヤー追加" Width="28"/>
+            <Button Content="－" Command="{Binding LayerPanel.DeleteLayerCommand}" ToolTip="削除" Width="28"/>
+            <Button Content="↑" Command="{Binding LayerPanel.MoveUpCommand}" ToolTip="上へ" Width="28"/>
+            <Button Content="↓" Command="{Binding LayerPanel.MoveDownCommand}" ToolTip="下へ" Width="28"/>
+            <Button Content="⎘" Command="{Binding LayerPanel.DuplicateCommand}" ToolTip="複製" Width="28"/>
+        </ToolBar>
+
+        <!-- レイヤーリスト -->
+        <ListBox ItemsSource="{Binding LayerPanel.Layers}"
+                 SelectedIndex="{Binding LayerPanel.SelectedIndex}"
+                 AllowDrop="True"
+                 Drop="OnDrop"
+                 DragOver="OnDragOver"
+                 PreviewMouseMove="OnPreviewMouseMove">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="{x:Type vm:LayerViewModel}">
+                    <Grid Height="36">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- 表示切り替え -->
+                        <CheckBox Grid.Column="0"
+                                  IsChecked="{Binding IsVisible}"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"
+                                  ToolTip="表示・非表示"/>
+
+                        <!-- レイヤー名 -->
+                        <TextBox Grid.Column="1"
+                                 Text="{Binding Name, UpdateSourceTrigger=LostFocus}"
+                                 VerticalAlignment="Center"
+                                 BorderThickness="0"
+                                 Background="Transparent"/>
+
+                        <!-- 不透明度 -->
+                        <TextBox Grid.Column="2"
+                                 Text="{Binding OpacityPercent, UpdateSourceTrigger=LostFocus}"
+                                 VerticalAlignment="Center"
+                                 TextAlignment="Right"
+                                 Width="40"
+                                 ToolTip="不透明度 (%)"/>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+</UserControl>

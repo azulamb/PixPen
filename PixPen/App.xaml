@@ -1,0 +1,35 @@
+<Application x:Class="PixPen.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:PixPen"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <!-- ToolBar の RadioButton をボタン風に見せるスタイル -->
+        <Style x:Key="ToolRadioStyle" TargetType="RadioButton">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="border" Background="Transparent"
+                                BorderThickness="1" BorderBrush="Transparent"
+                                Padding="2" CornerRadius="2">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#FF0078D7"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#FF005A9E"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#FFD0D0D0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+        <local:NullToBoolConverter x:Key="NullToBoolConverter"/>
+        <local:StringToColorConverter x:Key="StringToColorConverter"/>
+    </Application.Resources>
+</Application>

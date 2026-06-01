@@ -1,0 +1,94 @@
+<Window x:Class="PixPen.Views.Dialogs.GridSettingsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:m="clr-namespace:PixPen.Models"
+        xmlns:local="clr-namespace:PixPen"
+        Title="グリッドの設定"
+        Width="400" Height="320"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner">
+
+    <!-- StaticResource を使う前に必ず Resources を宣言する -->
+    <Window.Resources>
+        <local:StringToColorConverter x:Key="ColorConv"/>
+
+        <DataTemplate x:Key="GridSettingsTemplate" DataType="{x:Type m:SingleGridSettings}">
+            <Grid Margin="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="110"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 表示 -->
+                <CheckBox Grid.Row="0" Grid.ColumnSpan="3"
+                          Content="表示する"
+                          IsChecked="{Binding Visible}"
+                          Margin="2,4"/>
+
+                <!-- オフセット -->
+                <TextBlock Grid.Row="1" Text="オフセット X / Y" VerticalAlignment="Center"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Margin="2"
+                         Text="{Binding OffsetX, UpdateSourceTrigger=LostFocus, StringFormat=F1}"/>
+                <TextBox Grid.Row="1" Grid.Column="2" Margin="2"
+                         Text="{Binding OffsetY, UpdateSourceTrigger=LostFocus, StringFormat=F1}"/>
+
+                <!-- 間隔 -->
+                <TextBlock Grid.Row="2" Text="間隔 X / Y (px)" VerticalAlignment="Center"/>
+                <TextBox Grid.Row="2" Grid.Column="1" Margin="2"
+                         Text="{Binding SpacingX, UpdateSourceTrigger=LostFocus, StringFormat=F1}"/>
+                <TextBox Grid.Row="2" Grid.Column="2" Margin="2"
+                         Text="{Binding SpacingY, UpdateSourceTrigger=LostFocus, StringFormat=F1}"/>
+
+                <!-- 色 -->
+                <TextBlock Grid.Row="3" Text="色 (#AARRGGBB)" VerticalAlignment="Center"/>
+                <TextBox Grid.Row="3" Grid.Column="1" Margin="2"
+                         Text="{Binding Color, UpdateSourceTrigger=LostFocus}"
+                         ToolTip="#AARRGGBB 形式 (例: #80808080)"/>
+                <!-- カラープレビュー -->
+                <Rectangle Grid.Row="3" Grid.Column="2" Margin="2" RadiusX="2" RadiusY="2"
+                           Stroke="#FF888888" StrokeThickness="1">
+                    <Rectangle.Fill>
+                        <SolidColorBrush Color="{Binding Color, Converter={StaticResource ColorConv}}"/>
+                    </Rectangle.Fill>
+                </Rectangle>
+
+                <!-- 線種 -->
+                <TextBlock Grid.Row="4" Text="線種" VerticalAlignment="Center"/>
+                <ComboBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" Margin="2"
+                          SelectedItem="{Binding LineType}"
+                          ItemsSource="{x:Static m:GridLineTypeValues.All}"/>
+            </Grid>
+        </DataTemplate>
+    </Window.Resources>
+
+    <DockPanel Margin="12">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,8,0,0">
+            <Button Content="OK" Width="72" Margin="4" IsDefault="True" Click="OnOk"/>
+            <Button Content="キャンセル" Width="72" Margin="4" IsCancel="True" Click="OnCancel"/>
+        </StackPanel>
+
+        <TabControl>
+            <TabItem Header="小グリッド">
+                <ContentControl Content="{Binding Small}"
+                                ContentTemplate="{StaticResource GridSettingsTemplate}"/>
+            </TabItem>
+            <TabItem Header="中グリッド">
+                <ContentControl Content="{Binding Medium}"
+                                ContentTemplate="{StaticResource GridSettingsTemplate}"/>
+            </TabItem>
+            <TabItem Header="大グリッド">
+                <ContentControl Content="{Binding Large}"
+                                ContentTemplate="{StaticResource GridSettingsTemplate}"/>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>
