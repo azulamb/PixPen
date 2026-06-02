@@ -8,12 +8,16 @@
     <UseWPF>true</UseWPF>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationIcon>Resources\PixPen.ico</ApplicationIcon>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <!-- アイコンを WPF リソースとして埋め込む（MainWindow.Icon= で参照するため） -->
-    <Resource Include="Resources\PixPen.ico"/>
+    <Resource Include="Resources\PixPen.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MahApps.Metro.IconPacks" Version="6.2.1" />
   </ItemGroup>
 
 </Project>

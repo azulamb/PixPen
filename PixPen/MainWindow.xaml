@@ -5,6 +5,7 @@
         xmlns:ctrl="clr-namespace:PixPen.Controls"
         xmlns:panels="clr-namespace:PixPen.Views.Panels"
         xmlns:tools="clr-namespace:PixPen.Tools"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         Title="PixPen"
         Height="720" Width="1280"
         MinHeight="400" MinWidth="640"
@@ -65,22 +66,47 @@
         <ToolBarTray DockPanel.Dock="Top">
             <ToolBar Band="0" BandIndex="0">
                 <!-- Undo/Redo/Save -->
-                <Button Command="{Binding UndoCommand}" ToolTip="元に戻す (Ctrl+Z)" Width="28">↩</Button>
-                <Button Command="{Binding RedoCommand}" ToolTip="やり直す (Ctrl+Y)" Width="28">↪</Button>
-                <Button Command="{Binding SaveCommand}" ToolTip="保存 (Ctrl+S)" Width="28">💾</Button>
+                <Button Command="{Binding UndoCommand}" ToolTip="元に戻す (Ctrl+Z)" Width="34" Height="34" Padding="6">
+                    <iconPacks:PackIconMaterial Kind="UndoVariant"/>
+                </Button>
+                <Button Command="{Binding RedoCommand}" ToolTip="やり直す (Ctrl+Y)" Width="34" Height="34" Padding="6">
+                    <iconPacks:PackIconMaterial Kind="RedoVariant"/>
+                </Button>
+                <Button Command="{Binding SaveCommand}" ToolTip="保存 (Ctrl+S)" Width="34" Height="34" Padding="6">
+                    <iconPacks:PackIconMaterial Kind="ContentSave"/>
+                </Button>
                 <Separator/>
                 <!-- グリッド -->
-                <ToggleButton IsChecked="{Binding IsGridVisible}" ToolTip="グリッド" Width="28">⊞</ToggleButton>
+                <ToggleButton IsChecked="{Binding IsGridVisible}" ToolTip="グリッド" Width="34" Height="34" Padding="6">
+                    <iconPacks:PackIconMaterial Kind="Grid"/>
+                </ToggleButton>
                 <Separator/>
                 <!-- ツール選択 -->
+                <RadioButton GroupName="Tool" IsChecked="{Binding IsToolFill}"
+                             ToolTip="塗りつぶし (F)" Width="34" Height="34" Padding="6"
+                             Style="{StaticResource ToolRadioStyle}">
+                    <iconPacks:PackIconMaterial Kind="FormatColorFill"/>
+                </RadioButton>
                 <RadioButton GroupName="Tool" IsChecked="{Binding IsToolPen}"
-                             ToolTip="ペン (P)" Width="28" Style="{StaticResource ToolRadioStyle}">✏</RadioButton>
+                             ToolTip="ペン (P)" Width="34" Height="34" Padding="6"
+                             Style="{StaticResource ToolRadioStyle}">
+                    <iconPacks:PackIconMaterial Kind="Pencil"/>
+                </RadioButton>
                 <RadioButton GroupName="Tool" IsChecked="{Binding IsToolEyedropper}"
-                             ToolTip="スポイト (I)" Width="28" Style="{StaticResource ToolRadioStyle}">💉</RadioButton>
+                             ToolTip="スポイト (I)" Width="34" Height="34" Padding="6"
+                             Style="{StaticResource ToolRadioStyle}">
+                    <iconPacks:PackIconMaterial Kind="Eyedropper"/>
+                </RadioButton>
                 <RadioButton GroupName="Tool" IsChecked="{Binding IsToolEraser}"
-                             ToolTip="消しゴム (E)" Width="28" Style="{StaticResource ToolRadioStyle}">⬜</RadioButton>
+                             ToolTip="消しゴム (E)" Width="34" Height="34" Padding="6"
+                             Style="{StaticResource ToolRadioStyle}">
+                    <iconPacks:PackIconMaterial Kind="Eraser"/>
+                </RadioButton>
                 <RadioButton GroupName="Tool" IsChecked="{Binding IsToolSelection}"
-                             ToolTip="範囲選択 (S)" Width="28" Style="{StaticResource ToolRadioStyle}">▣</RadioButton>
+                             ToolTip="範囲選択 (S)" Width="34" Height="34" Padding="6"
+                             Style="{StaticResource ToolRadioStyle}">
+                    <iconPacks:PackIconMaterial Kind="SelectionDrag"/>
+                </RadioButton>
             </ToolBar>
         </ToolBarTray>
 
@@ -133,7 +159,7 @@
                   IsEnabled="{Binding DataContext.ActiveTab, RelativeSource={RelativeSource AncestorType=Window},
                               Converter={StaticResource NullToBoolConverter}}">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="*"    MinHeight="60"/>
+                    <RowDefinition Height="2.5*" MinHeight="120"/>
                     <RowDefinition Height="4"/>
                     <RowDefinition Height="*"    MinHeight="60"/>
                     <RowDefinition Height="4"/>

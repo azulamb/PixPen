@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Media;
 using PixPen.Models;
 using PixPen.Services;
@@ -8,6 +9,7 @@ namespace PixPen.ViewModels;
 public class ColorPalettePanelViewModel : ViewModelBase
 {
     private readonly ColorPalette _palette;
+    private readonly PaletteService _paletteService = new();
 
     public ObservableCollection<Color> PaletteColors { get; } = new();
 
@@ -21,13 +23,16 @@ public class ColorPalettePanelViewModel : ViewModelBase
             {
                 _palette.ForegroundColor = ColorHelper.ToArgbHex(value);
                 UpdateHsv(value);
-                // RGB も同期
                 OnPropertyChanged(nameof(R));
                 OnPropertyChanged(nameof(G));
                 OnPropertyChanged(nameof(B));
+                OnPropertyChanged(nameof(OpaqueColor));
             }
         }
     }
+
+    /// <summary>プレビュー左半分用：アルファを 255 に固定した不透明色</summary>
+    public Color OpaqueColor => Color.FromArgb(255, _foreground.R, _foreground.G, _foreground.B);
 
     // ─── RGB ────────────────────────────────────────────────────────────────
     public byte R
@@ -59,31 +64,31 @@ public class ColorPalettePanelViewModel : ViewModelBase
         set
         {
             if (SetField(ref _alpha, value))
-            {
-                var c = Foreground;
-                Foreground = Color.FromArgb(_alpha, c.R, c.G, c.B);
-            }
+                Foreground = Color.FromArgb(_alpha, _foreground.R, _foreground.G, _foreground.B);
         }
     }
 
-    public RelayCommand AddColorCommand { get; }
+    // ─── パレット操作コマンド ────────────────────────────────────────────────
+    public RelayCommand AddColorCommand    { get; }
     public RelayCommand RemoveColorCommand { get; }
     public RelayCommand<Color> SelectColorCommand { get; }
 
-    public void RefreshForeground()
+    // ─── プリセット管理 ─────────────────────────────────────────────────────
+    public ObservableCollection<string> PresetNames { get; } = new();
+
+    private string _presetName = "";
+    /// <summary>保存・読み込みに使用するプリセット名（ComboBox + TextBox で編集）</summary>
+    public string PresetName
     {
-        _foreground = ColorHelper.FromArgbHex(_palette.ForegroundColor);
-        _alpha = _foreground.A;
-        OnPropertyChanged(nameof(Foreground));
-        OnPropertyChanged(nameof(Alpha));
-        OnPropertyChanged(nameof(R));
-        OnPropertyChanged(nameof(G));
-        OnPropertyChanged(nameof(B));
-        UpdateHsv(_foreground);
+        get => _presetName;
+        set => SetField(ref _presetName, value);
     }
 
-    private bool _updatingFromHsv;
+    public RelayCommand SavePresetCommand   { get; }
+    public RelayCommand LoadPresetCommand   { get; }
+    public RelayCommand DeletePresetCommand { get; }
 
+    // ─── コンストラクタ ─────────────────────────────────────────────────────
     public ColorPalettePanelViewModel(ColorPalette palette)
     {
         _palette = palette;
@@ -94,6 +99,7 @@ public class ColorPalettePanelViewModel : ViewModelBase
         _foreground = ColorHelper.FromArgbHex(palette.ForegroundColor);
         UpdateHsv(_foreground);
 
+        // ── パレット操作 ──
         AddColorCommand = new RelayCommand(() =>
         {
             _palette.Colors.Add(ColorHelper.ToArgbHex(Foreground));
@@ -107,8 +113,92 @@ public class ColorPalettePanelViewModel : ViewModelBase
             _palette.Colors.RemoveAt(_palette.Colors.Count - 1);
         }, () => PaletteColors.Count > 0);
 
+
         SelectColorCommand = new RelayCommand<Color>(c => Foreground = c);
+
+        // ── プリセット管理 ──
+        SavePresetCommand = new RelayCommand(SavePreset,
+            () => !string.IsNullOrWhiteSpace(PresetName));
+
+        LoadPresetCommand = new RelayCommand(LoadPreset,
+            () => !string.IsNullOrWhiteSpace(PresetName) && _paletteService.Exists(PresetName));
+
+        DeletePresetCommand = new RelayCommand(DeletePreset,
+            () => !string.IsNullOrWhiteSpace(PresetName) && _paletteService.Exists(PresetName));
+
+        RefreshPresetNames();
     }
+
+    // ─── プリセット操作 ─────────────────────────────────────────────────────
+
+    private void SavePreset()
+    {
+        var name = PresetName.Trim();
+        if (string.IsNullOrEmpty(name)) return;
+
+        if (_paletteService.Exists(name))
+        {
+            if (MessageBox.Show($"'{name}' を上書きしますか？", "確認",
+                MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        }
+
+        _paletteService.Save(name, _palette.Colors);
+        RefreshPresetNames();
+        PresetName = name;
+    }
+
+    private void LoadPreset()
+    {
+        var name = PresetName.Trim();
+        if (string.IsNullOrEmpty(name)) return;
+
+        var colors = _paletteService.Load(name);
+        if (colors.Count == 0) return;
+
+        _palette.Colors.Clear();
+        PaletteColors.Clear();
+        foreach (var hex in colors)
+        {
+            _palette.Colors.Add(hex);
+            PaletteColors.Add(ColorHelper.FromArgbHex(hex));
+        }
+    }
+
+    private void DeletePreset()
+    {
+        var name = PresetName.Trim();
+        if (string.IsNullOrEmpty(name)) return;
+        if (MessageBox.Show($"'{name}' を削除しますか？", "確認",
+            MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+
+        _paletteService.Delete(name);
+        RefreshPresetNames();
+        PresetName = PresetNames.Count > 0 ? PresetNames[0] : "";
+    }
+
+    private void RefreshPresetNames()
+    {
+        PresetNames.Clear();
+        foreach (var n in _paletteService.GetNames())
+            PresetNames.Add(n);
+    }
+
+    // ─── 色更新 ─────────────────────────────────────────────────────────────
+
+    public void RefreshForeground()
+    {
+        _foreground = ColorHelper.FromArgbHex(_palette.ForegroundColor);
+        _alpha = _foreground.A;
+        OnPropertyChanged(nameof(Foreground));
+        OnPropertyChanged(nameof(Alpha));
+        OnPropertyChanged(nameof(R));
+        OnPropertyChanged(nameof(G));
+        OnPropertyChanged(nameof(B));
+        OnPropertyChanged(nameof(OpaqueColor));
+        UpdateHsv(_foreground);
+    }
+
+    private bool _updatingFromHsv;
 
     private void UpdateHsv(Color color)
     {

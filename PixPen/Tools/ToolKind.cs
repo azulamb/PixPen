@@ -5,5 +5,6 @@ public enum ToolKind
     Pen,
     Eraser,
     Eyedropper,
-    Selection
+    Selection,
+    Fill
 }

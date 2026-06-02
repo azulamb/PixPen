@@ -70,10 +70,11 @@ public class MainViewModel : ViewModelBase
         }
     }
 
-    public bool IsToolPen { get => SelectedTool == ToolKind.Pen; set { if (value) SelectedTool = ToolKind.Pen; } }
-    public bool IsToolEraser { get => SelectedTool == ToolKind.Eraser; set { if (value) SelectedTool = ToolKind.Eraser; } }
-    public bool IsToolEyedropper { get => SelectedTool == ToolKind.Eyedropper; set { if (value) SelectedTool = ToolKind.Eyedropper; } }
-    public bool IsToolSelection { get => SelectedTool == ToolKind.Selection; set { if (value) SelectedTool = ToolKind.Selection; } }
+    public bool IsToolPen       { get => SelectedTool == ToolKind.Pen;        set { if (value) SelectedTool = ToolKind.Pen; } }
+    public bool IsToolEraser    { get => SelectedTool == ToolKind.Eraser;     set { if (value) SelectedTool = ToolKind.Eraser; } }
+    public bool IsToolEyedropper{ get => SelectedTool == ToolKind.Eyedropper; set { if (value) SelectedTool = ToolKind.Eyedropper; } }
+    public bool IsToolSelection { get => SelectedTool == ToolKind.Selection;  set { if (value) SelectedTool = ToolKind.Selection; } }
+    public bool IsToolFill      { get => SelectedTool == ToolKind.Fill;       set { if (value) SelectedTool = ToolKind.Fill; } }
 
     // ─── コマンド ─────────────────────────────────────────────────────────
 

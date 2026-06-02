@@ -1,6 +1,40 @@
 <UserControl x:Class="PixPen.Views.Panels.ColorPalettePanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
+    <UserControl.Resources>
+        <!-- スウォッチボタン: ホバー時は白枠を太く、クリック時は黒枠（背景色は変えない） -->
+        <Style x:Key="SwatchButtonStyle" TargetType="Button">
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#FF888888"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="outerBorder"
+                                BorderBrush="#FF888888" BorderThickness="1"
+                                CornerRadius="1" SnapsToDevicePixels="True">
+                            <Border x:Name="innerBorder"
+                                    BorderBrush="Transparent" BorderThickness="0"
+                                    Background="{TemplateBinding Background}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <!-- ホバー: 外枠を白・2px に変更 -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="outerBorder" Property="BorderBrush" Value="White"/>
+                                <Setter TargetName="outerBorder" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                            <!-- 押下: 外枠を黒に変更 -->
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="outerBorder" Property="BorderBrush" Value="#FF111111"/>
+                                <Setter TargetName="outerBorder" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="52" MinWidth="46"/>
@@ -8,16 +42,24 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- ─── カラー一覧（左・縦並び） ─────────────────────────────── -->
+        <!-- ─── カラー一覧（左） ──────────────────────────────────────── -->
         <DockPanel Grid.Column="0">
-            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="1">
-                <Button Content="＋" Width="14" Height="14" FontSize="8" Padding="0"
-                        Command="{Binding ColorPanel.AddColorCommand}"
-                        ToolTip="現在の色をパレットに追加"/>
-                <Button Content="－" Width="14" Height="14" FontSize="8" Padding="0"
-                        Command="{Binding ColorPanel.RemoveColorCommand}"
-                        ToolTip="末尾の色を削除"/>
-            </StackPanel>
+
+            <!-- 追加・削除ボタン（下部・横幅いっぱい） -->
+            <UniformGrid DockPanel.Dock="Bottom" Rows="1" Margin="1,2,1,1">
+                <Button Command="{Binding ColorPanel.AddColorCommand}"
+                        ToolTip="現在の色をパレットに追加"
+                        Height="22" Padding="2">
+                    <iconPacks:PackIconMaterial Kind="Plus" Width="12" Height="12"/>
+                </Button>
+                <Button Command="{Binding ColorPanel.RemoveColorCommand}"
+                        ToolTip="末尾の色を削除"
+                        Height="22" Padding="2">
+                    <iconPacks:PackIconMaterial Kind="Minus" Width="12" Height="12"/>
+                </Button>
+            </UniformGrid>
+
+            <!-- スウォッチ一覧 -->
             <ScrollViewer VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Hidden">
                 <ItemsControl ItemsSource="{Binding ColorPanel.PaletteColors}">
@@ -29,7 +71,7 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Button Width="26" Height="26" Margin="2,1"
-                                    Padding="0" BorderThickness="1"
+                                    Style="{StaticResource SwatchButtonStyle}"
                                     Command="{Binding DataContext.ColorPanel.SelectColorCommand,
                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
                                     CommandParameter="{Binding}"
@@ -48,22 +90,96 @@
                       HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                       Background="#FF555555" ResizeBehavior="PreviousAndNext"/>
 
-        <!-- ─── 編集エリア（右） ───────────────────────────────────────── -->
+        <!-- ─── 編集エリア（右） ──────────────────────────────────────── -->
         <DockPanel Grid.Column="2" Margin="2">
 
-            <!-- カラープレビュー（常に表示） -->
-            <Rectangle DockPanel.Dock="Top" Height="26" Margin="2,2,2,2"
-                       RadiusX="2" RadiusY="2"
-                       Stroke="#FF888888" StrokeThickness="1">
-                <Rectangle.Fill>
-                    <SolidColorBrush Color="{Binding ColorPanel.Foreground}"/>
-                </Rectangle.Fill>
-            </Rectangle>
+            <!-- プリセット管理（上部） -->
+            <Border DockPanel.Dock="Top" Margin="2,2,2,4">
+                <StackPanel>
+                    <!-- プリセット名 / 選択 ComboBox -->
+                    <ComboBox IsEditable="True"
+                              Text="{Binding ColorPanel.PresetName, UpdateSourceTrigger=PropertyChanged}"
+                              ItemsSource="{Binding ColorPanel.PresetNames}"
+                              FontSize="9" Height="20" Margin="0,0,0,2"
+                              ToolTip="プリセット名を入力または選択"/>
+                    <!-- 読込 / 保存 / 削除 -->
+                    <UniformGrid Rows="1">
+                        <Button Command="{Binding ColorPanel.LoadPresetCommand}"
+                                ToolTip="選択したプリセットを読み込む"
+                                Height="22" Padding="2">
+                            <iconPacks:PackIconMaterial Kind="FolderOpen" Width="12" Height="12"/>
+                        </Button>
+                        <Button Command="{Binding ColorPanel.SavePresetCommand}"
+                                ToolTip="現在のパレットをプリセットとして保存"
+                                Height="22" Padding="2">
+                            <iconPacks:PackIconMaterial Kind="ContentSave" Width="12" Height="12"/>
+                        </Button>
+                        <Button Command="{Binding ColorPanel.DeletePresetCommand}"
+                                ToolTip="選択したプリセットを削除"
+                                Height="22" Padding="2">
+                            <iconPacks:PackIconMaterial Kind="TrashCanOutline" Width="12" Height="12"/>
+                        </Button>
+                    </UniformGrid>
+                </StackPanel>
+            </Border>
+
+            <!-- カラープレビュー（左:不透明 / 右:アルファ有効＋市松模様） -->
+            <Border DockPanel.Dock="Top" Height="26" Margin="2,0,2,4"
+                    BorderBrush="#FF888888" BorderThickness="1"
+                    CornerRadius="2" ClipToBounds="True">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 左：アルファ無視・不透明 -->
+                    <Rectangle Grid.Column="0">
+                        <Rectangle.Fill>
+                            <SolidColorBrush Color="{Binding ColorPanel.OpaqueColor}"/>
+                        </Rectangle.Fill>
+                    </Rectangle>
+
+                    <!-- 右：市松模様（透過の視覚化） -->
+                    <Rectangle Grid.Column="1">
+                        <Rectangle.Fill>
+                            <DrawingBrush TileMode="Tile"
+                                          Viewport="0,0,8,8"
+                                          ViewportUnits="Absolute">
+                                <DrawingBrush.Drawing>
+                                    <DrawingGroup>
+                                        <GeometryDrawing Brush="#FFB0B0B0">
+                                            <GeometryDrawing.Geometry>
+                                                <RectangleGeometry Rect="0,0,8,8"/>
+                                            </GeometryDrawing.Geometry>
+                                        </GeometryDrawing>
+                                        <GeometryDrawing Brush="#FF808080">
+                                            <GeometryDrawing.Geometry>
+                                                <GeometryGroup>
+                                                    <RectangleGeometry Rect="0,0,4,4"/>
+                                                    <RectangleGeometry Rect="4,4,4,4"/>
+                                                </GeometryGroup>
+                                            </GeometryDrawing.Geometry>
+                                        </GeometryDrawing>
+                                    </DrawingGroup>
+                                </DrawingBrush.Drawing>
+                            </DrawingBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+                    <!-- 右：アルファ有効で色を重ねる -->
+                    <Rectangle Grid.Column="1">
+                        <Rectangle.Fill>
+                            <SolidColorBrush Color="{Binding ColorPanel.Foreground}"/>
+                        </Rectangle.Fill>
+                    </Rectangle>
+
+                </Grid>
+            </Border>
 
             <!-- 指定方法タブ -->
             <TabControl>
 
-                <!-- ─── RGB（デフォルト） ─── -->
+                <!-- ─── RGB ─── -->
                 <TabItem Header="RGB">
                     <Grid Margin="2,4,2,2">
                         <Grid.RowDefinitions>

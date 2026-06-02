@@ -78,6 +78,7 @@ public class CanvasTabViewModel : ViewModelBase
 
     public PenTool PenTool { get; } = new();
     public EraserTool EraserTool { get; } = new();
+    public FillTool FillTool { get; } = new();
     public EyedropperTool EyedropperTool { get; }
     public SelectionTool SelectionTool { get; }
 

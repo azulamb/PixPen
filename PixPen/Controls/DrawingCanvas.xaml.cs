@@ -304,9 +304,27 @@ public partial class DrawingCanvas : UserControl
             return;
         }
 
-        if (e.LeftButton == MouseButtonState.Pressed && _vm.ActiveToolKind != ToolKind.Eyedropper)
+        if (e.LeftButton == MouseButtonState.Pressed)
         {
             var cp = ToCanvasPoint(e.GetPosition(this));
+
+            // スポイト: 左クリック／ドラッグで色取得
+            if (_vm.ActiveToolKind == ToolKind.Eyedropper)
+            {
+                _vm.PickColor((int)cp.X, (int)cp.Y);
+                CaptureMouse(); // ドラッグ中も継続取得できるようにキャプチャ
+                e.Handled = true;
+                return;
+            }
+
+            // 塗りつぶしはマウスダウン1回で完結（ストローク不要）
+            if (_vm.ActiveToolKind == ToolKind.Fill)
+            {
+                ExecuteFill(cp);
+                e.Handled = true;
+                return;
+            }
+
             var (pres, eraser, src) = ResolvePressure();
             if (_vm != null) { _vm.LastPressure = pres; _vm.LastPressureSource = src; }
             BeginStroke(cp, pres, eraser);
@@ -327,6 +345,15 @@ public partial class DrawingCanvas : UserControl
             _matrix.Translate(delta.X, delta.Y);
             SaveViewToVm();
             ApplyTransform();
+            e.Handled = true;
+            return;
+        }
+
+        // スポイト: ドラッグ中も連続で色取得
+        if (_vm.ActiveToolKind == ToolKind.Eyedropper && e.LeftButton == MouseButtonState.Pressed)
+        {
+            var cp = ToCanvasPoint(e.GetPosition(this));
+            _vm.PickColor((int)cp.X, (int)cp.Y);
             e.Handled = true;
             return;
         }
@@ -616,17 +643,47 @@ public partial class DrawingCanvas : UserControl
         if (_vm != null) _vm.Document.IsModified = true;
     }
 
+    /// <summary>塗りつぶしをUndoに対応した形で1回実行する</summary>
+    private void ExecuteFill(Point canvasPoint)
+    {
+        if (_vm == null || _vm.ActiveLayer == null || _vm.ActiveLayer.Bitmap == null) return;
+
+        var layer = _vm.ActiveLayer;
+
+        // Undo のためにビットマップを事前コピー
+        var before = new byte[layer.Width * layer.Height * 4];
+        layer.Bitmap.CopyPixels(new Int32Rect(0, 0, layer.Width, layer.Height),
+            before, layer.Width * 4, 0);
+
+        var sp = new StrokePoint(canvasPoint.X, canvasPoint.Y, 1.0, false);
+        var dirty = _vm.FillTool.OnDown(sp, layer, _vm.Document.Palette);
+
+        if (dirty.Width <= 0) return;
+
+        var after = new byte[before.Length];
+        layer.Bitmap.CopyPixels(new Int32Rect(0, 0, layer.Width, layer.Height),
+            after, layer.Width * 4, 0);
+
+        _vm.PushStrokeUndo(_vm.ActiveLayerIndex,
+            new Int32Rect(0, 0, layer.Width, layer.Height), before, after);
+
+        _vm.Document.IsModified = true;
+        _vm.RefreshTitle();
+        _vm.RecompositeRegion(dirty);
+    }
+
     private ITool GetEffectiveTool(bool isEraser)
     {
         if (_vm == null) return new PenTool();
         if (isEraser) return _vm.EraserTool;
         return _vm.ActiveToolKind switch
         {
-            ToolKind.Pen => _vm.PenTool,
-            ToolKind.Eraser => _vm.EraserTool,
+            ToolKind.Pen        => _vm.PenTool,
+            ToolKind.Eraser     => _vm.EraserTool,
             ToolKind.Eyedropper => _vm.EyedropperTool,
-            ToolKind.Selection => _vm.SelectionTool,
-            _ => _vm.PenTool
+            ToolKind.Selection  => _vm.SelectionTool,
+            ToolKind.Fill       => _vm.FillTool,
+            _                   => _vm.PenTool
         };
     }
 

@@ -4,14 +4,14 @@
              xmlns:local="clr-namespace:PixPen"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        <!-- ToolBar の RadioButton をボタン風に見せるスタイル -->
+        <!-- ToolBar の RadioButton をボタン風に見せるスタイル（アイコン対応） -->
         <Style x:Key="ToolRadioStyle" TargetType="RadioButton">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
                         <Border x:Name="border" Background="Transparent"
                                 BorderThickness="1" BorderBrush="Transparent"
-                                Padding="2" CornerRadius="2">
+                                Padding="{TemplateBinding Padding}" CornerRadius="3">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>

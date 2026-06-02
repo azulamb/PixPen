@@ -21,7 +21,10 @@ jobs:
         shell: pwsh
 
       - name: Create ZIP
-        run: Compress-Archive -Path bin/* -DestinationPath PixPen-v${{ steps.version.outputs.value }}.zip
+        run: |
+          Copy-Item README.md -Destination bin/
+          Copy-Item LICENSE -Destination bin/
+          Compress-Archive -Path bin/* -DestinationPath PixPen-v${{ steps.version.outputs.value }}.zip
         shell: pwsh
 
       - name: Create GitHub Release

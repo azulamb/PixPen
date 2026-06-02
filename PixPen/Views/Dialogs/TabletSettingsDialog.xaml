@@ -22,7 +22,7 @@
 
         <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="入力 API" FontWeight="SemiBold" Margin="0,0,0,8"/>
         <CheckBox Grid.Row="1" Grid.ColumnSpan="2"
-                  Content="Wacom WinTab API を使用する（要 Wacom ドライバ）"
+                  Content="Wacom WinTab API を使用する（要 Wacom ドライバ/アプリ再起動）"
                   IsChecked="{Binding UseWinTab}" Margin="0,0,0,12"/>
 
         <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Text="筆圧カーブ" FontWeight="SemiBold" Margin="0,0,0,8"/>
