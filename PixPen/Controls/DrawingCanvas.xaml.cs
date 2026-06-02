@@ -71,6 +71,7 @@ public partial class DrawingCanvas : UserControl
         if (e.OldValue is CanvasTabViewModel oldVm)
         {
             oldVm.CanvasInvalidated -= OnCanvasInvalidated;
+            oldVm.CanvasSizeChanged -= OnCanvasSizeChanged;
             oldVm.PropertyChanged  -= OnVmPropertyChanged;
             if (oldVm.TabletService is WinTabTabletService oldWt)
                 oldWt.PacketReceived -= OnWinTabPacket;
@@ -80,6 +81,7 @@ public partial class DrawingCanvas : UserControl
         {
             _vm = vm;
             vm.CanvasInvalidated += OnCanvasInvalidated;
+            vm.CanvasSizeChanged += OnCanvasSizeChanged;
             vm.PropertyChanged  += OnVmPropertyChanged;
             if (vm.TabletService is WinTabTabletService wt)
             {
@@ -180,6 +182,17 @@ public partial class DrawingCanvas : UserControl
         CompositeImage.Source = _vm.CompositeBitmap;
         UpdateGridOverlay();
         UpdateSelectionOverlay();
+    }
+
+    private void OnCanvasSizeChanged(object? sender, EventArgs e)
+    {
+        if (_vm == null) return;
+        // ビットマップの参照が変わるので Image.Source を更新
+        CompositeImage.Source = _vm.CompositeBitmap;
+        // ContentGrid のサイズを新サイズに更新
+        ApplyCanvasSize(_vm.Document.Width, _vm.Document.Height);
+        // 新サイズに合わせてビューをフィット
+        FitToWindow();
     }
 
     private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

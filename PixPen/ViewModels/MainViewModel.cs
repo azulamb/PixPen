@@ -283,7 +283,49 @@ public class MainViewModel : ViewModelBase
     // ─── ダイアログ ────────────────────────────────────────────────────────
 
     private void ShowDocumentSettings()
-        => ShowDialog<Views.Dialogs.DocumentSettingsDialog>(ActiveTab);
+    {
+        if (ActiveTab == null) return;
+        var doc = ActiveTab.Document;
+
+        // キャンセル時に戻せるよう現在値を保存
+        int   oldWidth  = doc.Width;
+        int   oldHeight = doc.Height;
+        int   oldDpi    = doc.Dpi;
+        string oldTitle = doc.Title;
+
+        var dlg = new Views.Dialogs.DocumentSettingsDialog
+        {
+            Owner = Application.Current.MainWindow,
+            DataContext = ActiveTab
+        };
+
+        if (dlg.ShowDialog() == true)
+        {
+            // 幅・高さが変わった場合はリサイズを適用
+            int newW = doc.Width;
+            int newH = doc.Height;
+            if (newW != oldWidth || newH != oldHeight)
+            {
+                // ResizeCanvas が内部で Width/Height を設定するため一旦旧値に戻す
+                doc.Width  = oldWidth;
+                doc.Height = oldHeight;
+                ActiveTab.ResizeCanvas(newW, newH);
+            }
+            else
+            {
+                doc.IsModified = true;
+                ActiveTab.RefreshTitle();
+            }
+        }
+        else
+        {
+            // キャンセル: バインディングで書き換わった値を元に戻す
+            doc.Width  = oldWidth;
+            doc.Height = oldHeight;
+            doc.Dpi    = oldDpi;
+            doc.Title  = oldTitle;
+        }
+    }
 
     private void ShowAppSettings()
     {

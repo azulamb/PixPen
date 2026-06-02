@@ -90,6 +90,8 @@ public class CanvasTabViewModel : ViewModelBase
 
     // DrawingCanvas へ再描画要求を通知
     public event EventHandler? CanvasInvalidated;
+    // DrawingCanvas へキャンバスサイズ変更を通知
+    public event EventHandler? CanvasSizeChanged;
 
     // ─── タイトル ──────────────────────────────────────────────────────────
 
@@ -227,6 +229,47 @@ public class CanvasTabViewModel : ViewModelBase
     // ─── ヘルパー ──────────────────────────────────────────────────────────
 
     public void InvalidateCanvas() => CanvasInvalidated?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>
+    /// キャンバスをリサイズする（左上基準）。
+    /// 縮小時は右下をカット、拡大時は右下を透明で拡張。
+    /// リサイズ後は Undo 履歴をクリアする。
+    /// </summary>
+    public void ResizeCanvas(int newWidth, int newHeight)
+    {
+        newWidth  = Math.Max(1, Math.Min(newWidth,  32767));
+        newHeight = Math.Max(1, Math.Min(newHeight, 32767));
+        if (newWidth == Document.Width && newHeight == Document.Height) return;
+
+        Services.Logger.Info($"ResizeCanvas: {Document.Width}x{Document.Height} → {newWidth}x{newHeight}");
+
+        // 全レイヤーをリサイズ
+        foreach (var layer in Document.Layers)
+        {
+            if (layer.Bitmap == null) continue;
+            layer.Bitmap = Services.FileService.ResizeLayerBitmap(
+                layer.Bitmap, newWidth, newHeight, Document.Dpi);
+        }
+
+        // ドキュメントサイズを更新
+        Document.Width  = newWidth;
+        Document.Height = newHeight;
+        Document.IsModified = true;
+
+        // CompositeBitmap を新サイズで再生成（スポイトツールも更新）
+        CompositeBitmap = Services.FileService.CreateTransparentBitmap(newWidth, newHeight, Document.Dpi);
+        EyedropperTool.CompositeBitmap = CompositeBitmap;
+
+        // リサイズ後は Undo 履歴が無効になるのでクリア
+        UndoRedo.Clear();
+
+        // キャンバスサイズ変更を DrawingCanvas に通知
+        CanvasSizeChanged?.Invoke(this, EventArgs.Empty);
+
+        // 再合成
+        RecompositeAll();
+        RefreshTitle();
+    }
 
     public void RefreshTitle() => OnPropertyChanged(nameof(Title));
 

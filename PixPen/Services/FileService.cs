@@ -186,6 +186,23 @@ public class FileService
 
     // ─── ビットマップ操作 ─────────────────────────────────────────────────────
 
+    /// <summary>
+    /// レイヤービットマップを新サイズにリサイズして返す（左上基準）。
+    /// 縮小時は右下をカット、拡大時は右下を透明で拡張する。
+    /// </summary>
+    public static WriteableBitmap ResizeLayerBitmap(WriteableBitmap source, int newWidth, int newHeight, int dpi)
+    {
+        var newBmp = CreateTransparentBitmap(newWidth, newHeight, dpi);
+        int copyW = Math.Min(source.PixelWidth, newWidth);
+        int copyH = Math.Min(source.PixelHeight, newHeight);
+        if (copyW <= 0 || copyH <= 0) return newBmp;
+
+        var pixels = new byte[copyW * copyH * 4];
+        source.CopyPixels(new Int32Rect(0, 0, copyW, copyH), pixels, copyW * 4, 0);
+        newBmp.WritePixels(new Int32Rect(0, 0, copyW, copyH), pixels, copyW * 4, 0);
+        return newBmp;
+    }
+
     public static WriteableBitmap CreateTransparentBitmap(int width, int height, int dpi)
     {
         var bmp = new WriteableBitmap(width, height, dpi, dpi, PixelFormats.Bgra32, null);
