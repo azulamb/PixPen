@@ -12,15 +12,20 @@ public partial class LayerPanel : UserControl
 
     public LayerPanel() => InitializeComponent();
 
-    // チェックボックスのクリックを ListBox に横取りさせない
+    // トグルボタンのクリックを ListBox に横取りさせない
     private void OnVisibilityClick(object sender, RoutedEventArgs e)
     {
         e.Handled = true;
-
         // IsChecked の変化は TwoWay バインディングで LayerViewModel.IsVisible に反映済み。
-        // ここで明示的に再合成して表示に反映する。
         if (DataContext is CanvasTabViewModel tab)
             tab.RecompositeAll();
+    }
+
+    private void OnLockClick(object sender, RoutedEventArgs e)
+    {
+        e.Handled = true;
+        // IsChecked の変化は TwoWay バインディングで LayerViewModel.IsLocked に反映済み。
+        // ロック状態は描画時に DrawingCanvas で参照されるため再合成不要。
     }
 
     // ドラッグ開始位置を記録

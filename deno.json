@@ -1,5 +1,6 @@
 {
   "tasks": {
+    "build:debug": "dotnet build PixPen/PixPen.csproj",
     "publish": "deno run --allow-run --allow-read --allow-write publish.ts"
   },
   "fmt": {

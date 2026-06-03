@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -7,9 +8,35 @@ namespace PixPen;
 
 public partial class App : Application
 {
+#if !DEBUG
+    // リリースビルドのみ多重起動防止用 Mutex を保持する
+    private static Mutex? _singleInstanceMutex;
+#endif
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+#if !DEBUG
+        // ── 多重起動防止（リリースビルドのみ） ───────────────────────────
+        // Mutex 名にはアプリ固有のサフィックスを付けて他アプリとの衝突を避ける
+        const string mutexName = "Local\\PixPen_SingleInstance_3C8A1F2E";
+        _singleInstanceMutex = new Mutex(initiallyOwned: true, name: mutexName,
+                                         out bool createdNew);
+        if (!createdNew)
+        {
+            // 別インスタンスがすでに Mutex を保持している
+            _singleInstanceMutex.Dispose();
+            _singleInstanceMutex = null;
+            MessageBox.Show(
+                "PixPen はすでに起動しています。",
+                "多重起動の防止",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            Shutdown();
+            return;
+        }
+#endif
 
         // ログファイルを起動時に上書き初期化
         Logger.Initialize();
@@ -32,6 +59,11 @@ public partial class App : Application
     {
         Logger.Info("Application exited");
         base.OnExit(e);
+
+#if !DEBUG
+        try { _singleInstanceMutex?.ReleaseMutex(); } catch { }
+        _singleInstanceMutex?.Dispose();
+#endif
     }
 
     private static void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

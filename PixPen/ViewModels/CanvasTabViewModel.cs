@@ -233,6 +233,7 @@ public class CanvasTabViewModel : ViewModelBase
     public void DeleteSelection()
     {
         if (!Selection.HasSelection || ActiveLayer?.Bitmap == null) return;
+        if (ActiveLayer.IsLocked) return;
         int bW = Document.Width, bH = Document.Height;
         int sx = Math.Max(0, Selection.X), sy = Math.Max(0, Selection.Y);
         int sw = Math.Min(Selection.Width, bW - sx);

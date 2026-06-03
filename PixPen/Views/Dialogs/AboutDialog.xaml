@@ -2,17 +2,42 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="PixPen について"
-        Width="280" Height="140"
+        Width="280"
+        SizeToContent="Height"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner">
     <StackPanel Margin="24" VerticalAlignment="Center">
+
+        <!-- 現在バージョン -->
         <TextBlock x:Name="VersionText"
                    HorizontalAlignment="Center"
                    FontSize="13"
-                   Margin="0,0,0,16"/>
-        <Button Content="閉じる" Width="80"
-                HorizontalAlignment="Center"
+                   Margin="0,0,0,12"/>
+
+        <!-- 最新バージョン確認ステータス -->
+        <TextBlock x:Name="UpdateStatusText"
+                   HorizontalAlignment="Center"
+                   FontSize="11"
+                   Foreground="{DynamicResource App.Subtle.Fg}"
+                   Margin="0,0,0,12"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"/>
+
+        <!-- ボタン列（縦並び） -->
+        <Button x:Name="CheckUpdateButton"
+                Content="最新バージョンを確認"
+                HorizontalAlignment="Stretch"
+                Margin="0,0,0,6"
+                Click="OnCheckUpdate"/>
+        <Button Content="リリースページ"
+                HorizontalAlignment="Stretch"
+                Margin="0,0,0,6"
+                Click="OnOpenReleasePage"
+                ToolTip="https://github.com/azulamb/PixPen/releases"/>
+        <Button Content="閉じる"
+                HorizontalAlignment="Stretch"
                 IsCancel="True"
                 Click="OnClose"/>
+
     </StackPanel>
 </Window>

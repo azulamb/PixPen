@@ -164,10 +164,12 @@ public class MainViewModel : ViewModelBase
             Dpi = Settings.DefaultDpi,
             Title = "Untitled"
         };
+        // 1 枚目のレイヤーはパレットの背景色で塗りつぶす
         var layer = new Layer
         {
             Name = "Layer 1",
-            Bitmap = FileService.CreateTransparentBitmap(doc.Width, doc.Height, doc.Dpi)
+            Bitmap = FileService.CreateFilledBitmap(
+                doc.Width, doc.Height, doc.Dpi, doc.Palette.BackgroundColor)
         };
         doc.Layers.Add(layer);
 

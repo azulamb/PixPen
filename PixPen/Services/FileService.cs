@@ -106,9 +106,10 @@ public class FileService
             {
                 var layer = new Layer
                 {
-                    Name = lm.Name,
+                    Name     = lm.Name,
                     IsVisible = lm.IsVisible,
-                    Opacity = lm.Opacity
+                    IsLocked = lm.IsLocked,
+                    Opacity  = lm.Opacity
                 };
 
                 var imgEntry = zip.GetEntry($"layer_{lm.Index:D4}.png");
@@ -218,6 +219,47 @@ public class FileService
     }
 
     /// <summary>
+    /// 指定色で塗りつぶした WriteableBitmap を作成する。
+    /// colorHex は #AARRGGBB 形式。
+    /// </summary>
+    public static WriteableBitmap CreateFilledBitmap(int width, int height, int dpi, string colorHex)
+    {
+        // #AARRGGBB をパース（失敗時は白）
+        byte a = 0xFF, r = 0xFF, g = 0xFF, b = 0xFF;
+        if (colorHex.Length == 9 && colorHex[0] == '#')
+        {
+            try
+            {
+                a = Convert.ToByte(colorHex.Substring(1, 2), 16);
+                r = Convert.ToByte(colorHex.Substring(3, 2), 16);
+                g = Convert.ToByte(colorHex.Substring(5, 2), 16);
+                b = Convert.ToByte(colorHex.Substring(7, 2), 16);
+            }
+            catch { }
+        }
+
+        var bmp = new WriteableBitmap(width, height, dpi, dpi, PixelFormats.Bgra32, null);
+        bmp.Lock();
+        unsafe
+        {
+            byte* ptr = (byte*)bmp.BackBuffer;
+            int stride = bmp.BackBufferStride;
+            // 1 行目を塗りつぶす
+            for (int x = 0; x < width; x++)
+            {
+                byte* px = ptr + x * 4;
+                px[0] = b; px[1] = g; px[2] = r; px[3] = a;
+            }
+            // 残りの行は 1 行目をコピー
+            for (int y = 1; y < height; y++)
+                new Span<byte>(ptr, width * 4).CopyTo(new Span<byte>(ptr + y * stride, width * 4));
+        }
+        bmp.AddDirtyRect(new Int32Rect(0, 0, width, height));
+        bmp.Unlock();
+        return bmp;
+    }
+
+    /// <summary>
     /// WriteableBitmap を PNG としてストリームに書き出す。
     /// 2 段階方式:
     ///   1. ピクセルデータを配列にコピー → Freeze 可能な BitmapSource 経由でエンコード
@@ -317,10 +359,11 @@ public class FileService
         Grid = doc.Grid,
         Layers = doc.Layers.Select((l, i) => new LayerMeta
         {
-            Index = i,
-            Name = l.Name,
+            Index    = i,
+            Name     = l.Name,
             IsVisible = l.IsVisible,
-            Opacity = l.Opacity
+            IsLocked = l.IsLocked,
+            Opacity  = l.Opacity
         }).ToList()
     };
 
@@ -344,6 +387,7 @@ public class FileService
         public int Index { get; set; }
         public string Name { get; set; } = "";
         public bool IsVisible { get; set; }
+        public bool IsLocked { get; set; }
         public double Opacity { get; set; }
     }
 }

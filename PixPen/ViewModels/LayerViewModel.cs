@@ -21,6 +21,12 @@ public class LayerViewModel : ViewModelBase
         set { if (_layer.IsVisible != value) { _layer.IsVisible = value; OnPropertyChanged(); _onModified(); } }
     }
 
+    public bool IsLocked
+    {
+        get => _layer.IsLocked;
+        set { if (_layer.IsLocked != value) { _layer.IsLocked = value; OnPropertyChanged(); } }
+    }
+
     public double Opacity
     {
         get => _layer.Opacity;

@@ -40,7 +40,10 @@ public partial class MainWindow : Window
         _vm.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(MainViewModel.ActiveTab))
+            {
                 UpdatePanelDataContexts();
+                EnsureActiveTabWinTabInitialized();
+            }
         };
 
         _vm.UILayoutRequested           += ShowUILayoutDialog;
@@ -371,7 +374,17 @@ public partial class MainWindow : Window
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
-        if (_vm.ActiveTab?.TabletService is Services.WinTabTabletService wt)
+        EnsureActiveTabWinTabInitialized();
+    }
+
+    /// <summary>
+    /// アクティブタブの WinTabTabletService が未初期化であれば Initialize する。
+    /// Ctrl+N などで新しいタブが作られるたびに呼ぶことで、
+    /// 2 枚目以降のタブでも WinTab 筆圧が機能するようにする。
+    /// </summary>
+    private void EnsureActiveTabWinTabInitialized()
+    {
+        if (_vm.ActiveTab?.TabletService is Services.WinTabTabletService wt && !wt.IsAvailable)
             wt.Initialize(this);
     }
 

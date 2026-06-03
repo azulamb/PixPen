@@ -664,6 +664,7 @@ public partial class DrawingCanvas : UserControl
     private void BeginStroke(Point canvasPoint, double pressure, bool isEraser)
     {
         if (_vm == null || _vm.ActiveLayer == null || _vm.ActiveLayer.Bitmap == null) return;
+        if (_vm.ActiveLayer.IsLocked) return;
 
         // 移動中に別のストロークが始まる場合（例: 選択外クリック）は先に移動を確定する
         if (_selectionMoving) EndSelectionMove();
@@ -927,6 +928,7 @@ public partial class DrawingCanvas : UserControl
     private void ExecuteFill(Point canvasPoint)
     {
         if (_vm == null || _vm.ActiveLayer == null || _vm.ActiveLayer.Bitmap == null) return;
+        if (_vm.ActiveLayer.IsLocked) return;
 
         var layer = _vm.ActiveLayer;
 

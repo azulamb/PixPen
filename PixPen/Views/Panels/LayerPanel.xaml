@@ -3,6 +3,23 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:PixPen.ViewModels"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
+    <UserControl.Resources>
+        <!-- Eye / Lock ボタン共通テンプレート -->
+        <ControlTemplate x:Key="LayerIconBtnTpl" TargetType="ToggleButton">
+            <Border x:Name="bd"
+                    Background="{TemplateBinding Background}"
+                    Padding="{TemplateBinding Padding}"
+                    SnapsToDevicePixels="True">
+                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="bd" Property="Background" Value="{DynamicResource App.Hover}"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+    </UserControl.Resources>
+
     <DockPanel>
         <!-- ボタン列（下部） -->
         <UniformGrid DockPanel.Dock="Bottom" Rows="1" Margin="1,2,1,1">
@@ -40,28 +57,104 @@
                 <DataTemplate DataType="{x:Type vm:LayerViewModel}">
                     <Grid Height="36">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="28"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="60"/>
+                            <ColumnDefinition Width="26"/><!-- 目アイコン -->
+                            <ColumnDefinition Width="*"/> <!-- レイヤー名 -->
+                            <ColumnDefinition Width="26"/><!-- 鍵アイコン -->
+                            <ColumnDefinition Width="44"/><!-- 不透明度 -->
                         </Grid.ColumnDefinitions>
 
-                        <!-- 表示切り替え -->
-                        <CheckBox Grid.Column="0"
-                                  IsChecked="{Binding IsVisible, Mode=TwoWay}"
-                                  Click="OnVisibilityClick"
-                                  VerticalAlignment="Center"
-                                  HorizontalAlignment="Center"
-                                  ToolTip="表示・非表示"/>
+                        <!-- ── 表示/非表示（目アイコン） ────────────────── -->
+                        <ToggleButton Grid.Column="0"
+                                      IsChecked="{Binding IsVisible, Mode=TwoWay}"
+                                      Click="OnVisibilityClick"
+                                      Width="22" Height="22"
+                                      VerticalAlignment="Center"
+                                      HorizontalAlignment="Center"
+                                      ToolTip="表示・非表示">
+                            <ToggleButton.Style>
+                                <Style TargetType="ToggleButton">
+                                    <Setter Property="Template"        Value="{StaticResource LayerIconBtnTpl}"/>
+                                    <Setter Property="Background"      Value="Transparent"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Setter Property="Padding"         Value="2"/>
+                                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                    <!-- 表示中: 目アイコン（フル） -->
+                                    <Setter Property="ContentTemplate">
+                                        <Setter.Value>
+                                            <DataTemplate>
+                                                <iconPacks:PackIconMaterial Kind="Eye"
+                                                    Width="13" Height="13"/>
+                                            </DataTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <!-- 非表示: 目オフアイコン（薄く） -->
+                                        <Trigger Property="IsChecked" Value="False">
+                                            <Setter Property="ContentTemplate">
+                                                <Setter.Value>
+                                                    <DataTemplate>
+                                                        <iconPacks:PackIconMaterial Kind="EyeOff"
+                                                            Width="13" Height="13" Opacity="0.35"/>
+                                                    </DataTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ToggleButton.Style>
+                        </ToggleButton>
 
-                        <!-- レイヤー名 -->
+                        <!-- ── レイヤー名 ─────────────────────────────── -->
                         <TextBox Grid.Column="1"
                                  Text="{Binding Name, UpdateSourceTrigger=LostFocus}"
                                  VerticalAlignment="Center"
                                  BorderThickness="0"
-                                 Background="Transparent"/>
+                                 Background="Transparent"
+                                 />
 
-                        <!-- 不透明度 -->
-                        <TextBox Grid.Column="2"
+                        <!-- ── ロック（南京錠アイコン） ─────────────────── -->
+                        <ToggleButton Grid.Column="2"
+                                      IsChecked="{Binding IsLocked, Mode=TwoWay}"
+                                      Click="OnLockClick"
+                                      Width="22" Height="22"
+                                      VerticalAlignment="Center"
+                                      HorizontalAlignment="Center"
+                                      ToolTip="レイヤーロック">
+                            <ToggleButton.Style>
+                                <Style TargetType="ToggleButton">
+                                    <Setter Property="Template"        Value="{StaticResource LayerIconBtnTpl}"/>
+                                    <Setter Property="Background"      Value="Transparent"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Setter Property="Padding"         Value="2"/>
+                                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                    <!-- 未ロック: 開いた南京錠（薄く） -->
+                                    <Setter Property="ContentTemplate">
+                                        <Setter.Value>
+                                            <DataTemplate>
+                                                <iconPacks:PackIconMaterial Kind="LockOpenVariant"
+                                                    Width="13" Height="13" Opacity="0.30"/>
+                                            </DataTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <!-- ロック中: 閉じた南京錠（フル） -->
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter Property="ContentTemplate">
+                                                <Setter.Value>
+                                                    <DataTemplate>
+                                                        <iconPacks:PackIconMaterial Kind="Lock"
+                                                            Width="13" Height="13"/>
+                                                    </DataTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ToggleButton.Style>
+                        </ToggleButton>
+
+                        <!-- ── 不透明度 ──────────────────────────────── -->
+                        <TextBox Grid.Column="3"
                                  Text="{Binding OpacityPercent, UpdateSourceTrigger=LostFocus}"
                                  VerticalAlignment="Center"
                                  TextAlignment="Right"
