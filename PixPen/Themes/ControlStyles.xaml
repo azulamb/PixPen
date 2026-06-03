@@ -525,10 +525,12 @@
                                   Fill="{DynamicResource App.Fg}"
                                   HorizontalAlignment="Center" VerticalAlignment="Center"
                                   Visibility="Collapsed"/>
-                            <!-- サブメニューポップアップ -->
-                            <Popup x:Name="PART_Popup" Grid.Column="0"
+                            <!-- サブメニューポップアップ
+                                 TopLevelHeader → Placement="Bottom"（下に展開）
+                                 SubmenuHeader  → トリガーで Placement="Right"（右に展開） -->
+                            <Popup x:Name="PART_Popup" Grid.ColumnSpan="4"
                                    IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
-                                   Placement="Right" AllowsTransparency="True" PopupAnimation="Fade">
+                                   Placement="Bottom" AllowsTransparency="True" PopupAnimation="Fade">
                                 <Border Background="{DynamicResource App.Popup.Bg}"
                                         BorderBrush="{DynamicResource App.Popup.Border}"
                                         BorderThickness="1">
@@ -544,8 +546,10 @@
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Foreground" Value="{DynamicResource App.Disabled.Fg}"/>
                         </Trigger>
+                        <!-- サブメニュー項目は右に展開し、矢印を表示 -->
                         <Trigger Property="Role" Value="SubmenuHeader">
                             <Setter TargetName="submenuArrow" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="PART_Popup"   Property="Placement"   Value="Right"/>
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="bd" Property="Background" Value="{DynamicResource App.Selected.Inactive.Bg}"/>
