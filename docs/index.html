@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
   <head>
@@ -56,7 +55,7 @@
       dialog {
         border: none;
         padding: 0;
-        background: none;
+        background: transparent;
       }
       dialog::backdrop {
         background: rgba(0, 0, 0, 0.5);
@@ -91,10 +90,10 @@
               preview.innerHTML = "";
               preview.appendChild(clone);
               preview.showModal();
-          }
+            }
+          });
         });
       });
-    });
     </script>
   </head>
   <body>
@@ -103,10 +102,14 @@
       <h1>PixPen</h1>
       <ul>
         <li><a href="https://github.com/azulamb/PixPen">GitHub</a></li>
-        <li><a href="https://github.com/azulamb/PixPen/releases">Download</a></li>
+        <li>
+          <a href="https://github.com/azulamb/PixPen/releases">Download</a>
+        </li>
       </ul>
       <p>PixPenはシンプルなお絵かきツールです。</p>
-      <p>アンチエイリアスなしのイラストを描けます。完全に個人のイラスト練習用なので機能は多くない代わりに軽量に動きます。</p>
+      <p>
+        アンチエイリアスなしのイラストを描けます。完全に個人のイラスト練習用なので機能は多くない代わりに軽量に動きます。
+      </p>
       <img src="./ss.png" alt="A screenshot of PixPen" class="preview">
       <h2>動作環境</h2>
       <dl>
@@ -119,7 +122,7 @@
       </dl>
     </article>
     <footer>
-        <small>&copy; 2026 Hiroki. All rights reserved.</small>
+      <small>&copy; 2026 Hiroki. All rights reserved.</small>
     </footer>
     <dialog id="preview"></dialog>
   </body>

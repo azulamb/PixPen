@@ -64,7 +64,10 @@ if (existing) {
 
 const versionInfo = JSON.parse(Deno.readTextFileSync("docs/version.json"));
 if (versionInfo.version !== version) {
-  Deno.writeTextFileSync("docs/version.json", JSON.stringify({ version: version }));
+  Deno.writeTextFileSync(
+    "docs/version.json",
+    JSON.stringify({ version: version }),
+  );
   console.log(`Updated docs/version.json ${versionInfo.version} -> ${version}`);
 }
 
