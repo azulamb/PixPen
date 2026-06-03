@@ -6,6 +6,8 @@ PixPenはシンプルなお絵かきツールです。
 
 https://azulamb.github.io/PixPen/
 
+![screenshot](./docs/ss.png)
+
 ---
 
 ## ライセンス
