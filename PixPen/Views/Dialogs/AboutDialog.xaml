@@ -2,16 +2,17 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="PixPen について"
-        Width="360" Height="220"
+        Width="280" Height="140"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner">
     <StackPanel Margin="24" VerticalAlignment="Center">
-        <TextBlock Text="PixPen" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center"/>
-        <TextBlock Text="シンプルなお絵かきツール" FontSize="13"
-                   HorizontalAlignment="Center" Margin="0,4,0,12"/>
-        <Separator/>
-        <TextBlock Text="WPF (.NET 10)" HorizontalAlignment="Center" Margin="0,8"/>
-        <Button Content="閉じる" Width="80" Margin="0,12,0,0"
-                HorizontalAlignment="Center" Click="OnClose"/>
+        <TextBlock x:Name="VersionText"
+                   HorizontalAlignment="Center"
+                   FontSize="13"
+                   Margin="0,0,0,16"/>
+        <Button Content="閉じる" Width="80"
+                HorizontalAlignment="Center"
+                IsCancel="True"
+                Click="OnClose"/>
     </StackPanel>
 </Window>
