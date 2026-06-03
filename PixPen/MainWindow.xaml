@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:PixPen.ViewModels"
         xmlns:ctrl="clr-namespace:PixPen.Controls"
-        xmlns:panels="clr-namespace:PixPen.Views.Panels"
         xmlns:tools="clr-namespace:PixPen.Tools"
         xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
         Title="PixPen"
@@ -61,6 +60,8 @@
                 <MenuItem Header="グリッド(_G)" Command="{Binding ToggleGridCommand}"
                           IsCheckable="True" IsChecked="{Binding IsGridVisible}"/>
                 <MenuItem Header="グリッドの設定..." Command="{Binding GridSettingsCommand}"/>
+                <Separator/>
+                <MenuItem Header="UI レイアウトの設定(_L)..." Command="{Binding UILayoutCommand}"/>
             </MenuItem>
             <MenuItem Header="ヘルプ(_H)">
                 <MenuItem Header="PixPen について..." Command="{Binding AboutCommand}"/>
@@ -122,16 +123,33 @@
             </StatusBarItem>
         </StatusBar>
 
-        <!-- ─── メインコンテンツ（3 列） ─────────────────────── -->
+        <!-- ─── メインコンテンツ（5 列） ─────────────────────── -->
         <Grid x:Name="MainGrid">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="CanvasColumn" Width="*"/>
-                <ColumnDefinition Width="4"/>
-                <ColumnDefinition x:Name="SideColumn" Width="240" MinWidth="160" MaxWidth="480"/>
+                <!-- 左サイドパネル（空のとき Width=0 で非表示） -->
+                <ColumnDefinition x:Name="LeftSideCol"      Width="0"/>
+                <ColumnDefinition x:Name="LeftSplitterCol"  Width="0"/>
+                <!-- キャンバス -->
+                <ColumnDefinition Width="*"/>
+                <!-- 右サイドパネル -->
+                <ColumnDefinition x:Name="RightSplitterCol" Width="4"/>
+                <ColumnDefinition x:Name="RightSideCol"     Width="240" MinWidth="160" MaxWidth="480"/>
             </Grid.ColumnDefinitions>
 
+            <!-- 左サイドパネル（コードビハインドで動的構築） -->
+            <Grid x:Name="LeftSidePanelGrid"
+                  Grid.Column="0"
+                  IsEnabled="{Binding ActiveTab, Converter={StaticResource NullToBoolConverter}}"/>
+
+            <!-- 左スプリッター -->
+            <GridSplitter x:Name="LeftSplitter"
+                          Grid.Column="1" Width="4" HorizontalAlignment="Stretch"
+                          Background="{DynamicResource App.Splitter}" ResizeBehavior="PreviousAndNext"
+                          Visibility="Collapsed"/>
+
             <!-- キャンバスタブエリア -->
-            <TabControl Grid.Column="0"
+            <TabControl x:Name="CanvasTabControl"
+                        Grid.Column="2"
                         ItemsSource="{Binding Tabs}"
                         SelectedItem="{Binding ActiveTab}"
                         TabStripPlacement="Top">
@@ -144,7 +162,9 @@
                                     FontSize="9" Padding="0"
                                     Command="{Binding DataContext.CloseTabCommand,
                                         RelativeSource={RelativeSource AncestorType=Window}}"
-                                    Background="Transparent" BorderThickness="0"/>
+                                    CommandParameter="{Binding}"
+                                    Background="Transparent" BorderThickness="0" BorderBrush="Transparent"
+                                    Style="{x:Null}"/>
                         </StackPanel>
                     </DataTemplate>
                 </TabControl.ItemTemplate>
@@ -155,40 +175,15 @@
                 </TabControl.ContentTemplate>
             </TabControl>
 
-            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch"
-                          Background="#FF555555" ResizeBehavior="PreviousAndNext"/>
+            <!-- 右スプリッター -->
+            <GridSplitter x:Name="RightSplitter"
+                          Grid.Column="3" Width="4" HorizontalAlignment="Stretch"
+                          Background="{DynamicResource App.Splitter}" ResizeBehavior="PreviousAndNext"/>
 
-            <!-- サイドパネル（縦並び・GridSplitter でサイズ変更可） -->
-            <Grid Grid.Column="2"
-                  DataContext="{Binding ActiveTab}"
-                  IsEnabled="{Binding DataContext.ActiveTab, RelativeSource={RelativeSource AncestorType=Window},
-                              Converter={StaticResource NullToBoolConverter}}">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="2.5*" MinHeight="120"/>
-                    <RowDefinition Height="4"/>
-                    <RowDefinition Height="*"    MinHeight="60"/>
-                    <RowDefinition Height="4"/>
-                    <RowDefinition Height="1.5*" MinHeight="80"/>
-                </Grid.RowDefinitions>
-
-                <GroupBox Grid.Row="0" Header="カラー" Padding="0">
-                    <panels:ColorPalettePanel/>
-                </GroupBox>
-
-                <GridSplitter Grid.Row="1" HorizontalAlignment="Stretch"
-                              Background="#FF555555" ResizeBehavior="PreviousAndNext"/>
-
-                <GroupBox Grid.Row="2" Header="ペン" Padding="0">
-                    <panels:PenPalettePanel/>
-                </GroupBox>
-
-                <GridSplitter Grid.Row="3" HorizontalAlignment="Stretch"
-                              Background="#FF555555" ResizeBehavior="PreviousAndNext"/>
-
-                <GroupBox Grid.Row="4" Header="レイヤー" Padding="0">
-                    <panels:LayerPanel/>
-                </GroupBox>
-            </Grid>
+            <!-- 右サイドパネル（コードビハインドで動的構築） -->
+            <Grid x:Name="RightSidePanelGrid"
+                  Grid.Column="4"
+                  IsEnabled="{Binding ActiveTab, Converter={StaticResource NullToBoolConverter}}"/>
         </Grid>
     </DockPanel>
 </Window>

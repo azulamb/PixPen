@@ -15,6 +15,11 @@ public partial class App : Application
         Logger.Initialize();
         Logger.Info("Application started");
 
+        // テーマを初期化（設定を読み込んで適用）
+        var settingsService = new AppSettingsService();
+        var settings = settingsService.Load();
+        ThemeService.Initialize(settings.Theme);
+
         // UI スレッドの未処理例外
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         // バックグラウンドスレッドの未処理例外

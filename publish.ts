@@ -62,4 +62,10 @@ if (existing) {
   Deno.exit(1);
 }
 
+const versionInfo = JSON.parse(Deno.readTextFileSync("docs/version.json"));
+if (versionInfo.version !== version) {
+  Deno.writeTextFileSync("docs/version.json", JSON.stringify({ version: version }));
+  console.log(`Updated docs/version.json ${versionInfo.version} -> ${version}`);
+}
+
 console.log(`OK: v${version} is ready to release`);

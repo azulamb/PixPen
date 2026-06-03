@@ -100,6 +100,10 @@ public class MainViewModel : ViewModelBase
     // 表示
     public RelayCommand ToggleGridCommand { get; }
     public RelayCommand GridSettingsCommand { get; }
+    public RelayCommand UILayoutCommand { get; }
+
+    /// <summary>UIレイアウト設定ダイアログを開くよう MainWindow に通知する</summary>
+    public event Action? UILayoutRequested;
 
     // ヘルプ
     public RelayCommand AboutCommand { get; }
@@ -119,7 +123,9 @@ public class MainViewModel : ViewModelBase
         DocumentSettingsCommand = new RelayCommand(ShowDocumentSettings, () => ActiveTab != null);
         AppSettingsCommand = new RelayCommand(ShowAppSettings);
         TabletSettingsCommand = new RelayCommand(ShowTabletSettings);
-        CloseTabCommand = new RelayCommand(CloseActiveTab, () => ActiveTab != null);
+        CloseTabCommand = new RelayCommand(
+            param => CloseTab(param as CanvasTabViewModel),
+            _ => Tabs.Count > 0);
 
         // 編集
         UndoCommand = new RelayCommand(Undo, () => ActiveTab?.UndoRedo.CanUndo ?? false);
@@ -132,6 +138,7 @@ public class MainViewModel : ViewModelBase
         // 表示
         ToggleGridCommand = new RelayCommand(() => IsGridVisible = !IsGridVisible);
         GridSettingsCommand = new RelayCommand(ShowGridSettings, () => ActiveTab != null);
+        UILayoutCommand = new RelayCommand(() => UILayoutRequested?.Invoke());
 
         // ヘルプ
         AboutCommand = new RelayCommand(ShowAbout);
@@ -181,6 +188,9 @@ public class MainViewModel : ViewModelBase
         {
             TabletService = TabletServiceFactory.Create(Settings)
         };
+        // PenTool が Settings と同じ PressureCurve インスタンスを参照するようにする。
+        // これにより、設定ダイアログでのスライダー操作が次のストロークから即時反映される。
+        tab.PenTool.PressureCurve = Settings.PressureCurve;
         tab.PropertyChanged += (_, _) => OnPropertyChanged(nameof(StatusText));
         Tabs.Add(tab);
         ActiveTab = tab;
@@ -203,7 +213,22 @@ public class MainViewModel : ViewModelBase
         try
         {
             var doc = _fileService.Load(path);
+            // タイトルをファイル名（拡張子なし）にする
+            doc.Title = System.IO.Path.GetFileNameWithoutExtension(path);
+
+            // 空の未保存 Untitled タブが1枚だけある場合はそれを置き換える
+            var blank = Tabs.Count == 1
+                && !Tabs[0].Document.IsModified
+                && string.IsNullOrEmpty(Tabs[0].Document.FilePath)
+                ? Tabs[0] : null;
+
             AddTab(doc);
+
+            if (blank != null)
+            {
+                blank.TabletService?.Dispose();
+                Tabs.Remove(blank);
+            }
         }
         catch (Exception ex)
         {
@@ -240,6 +265,8 @@ public class MainViewModel : ViewModelBase
     {
         try
         {
+            // タイトルをファイル名（拡張子なし）に合わせる
+            tab.Document.Title = System.IO.Path.GetFileNameWithoutExtension(path);
             _fileService.Save(tab.Document, path);
             tab.Document.IsModified = false;
             tab.RefreshTitle();
@@ -257,20 +284,38 @@ public class MainViewModel : ViewModelBase
         ShowDialog<Views.Dialogs.ExportDialog>(ActiveTab);
     }
 
-    private void CloseActiveTab()
+    /// <summary>
+    /// 指定タブを閉じる。null の場合は ActiveTab を閉じる。
+    /// メニュー（Ctrl+W）からは param=null で呼ばれ、タブの✕ボタンからは該当 VM が渡される。
+    /// </summary>
+    private void CloseTab(CanvasTabViewModel? target)
     {
-        if (ActiveTab == null) return;
-        if (ActiveTab.Document.IsModified)
+        var tab = target ?? ActiveTab;
+        if (tab == null) return;
+
+        if (tab.Document.IsModified)
         {
             var result = MessageBox.Show(
-                $"「{ActiveTab.Document.Title}」への変更を保存しますか？",
+                $"「{tab.Document.Title}」への変更を保存しますか？",
                 "確認", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
             if (result == MessageBoxResult.Cancel) return;
-            if (result == MessageBoxResult.Yes) Save();
+            if (result == MessageBoxResult.Yes)
+            {
+                // 保存対象を一時的に ActiveTab に合わせる
+                var prev = ActiveTab;
+                ActiveTab = tab;
+                Save();
+                ActiveTab = prev;
+            }
         }
-        var tab = ActiveTab;
+
+        bool wasActive = tab == ActiveTab;
+        tab.TabletService?.Dispose();
         Tabs.Remove(tab);
-        ActiveTab = Tabs.LastOrDefault();
+
+        if (wasActive)
+            ActiveTab = Tabs.LastOrDefault();
+
         if (Tabs.Count == 0) NewDocument();
     }
 
@@ -345,15 +390,59 @@ public class MainViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// UseWinTab が変更されたとき MainWindow に TabletService の再構築を依頼するイベント。
+    /// </summary>
+    public event Action? TabletServiceRebuildRequested;
+
     private void ShowTabletSettings()
     {
+        // ダイアログはバインディング経由で Settings を直接変更するため、
+        // キャンセル時に戻せるよう事前にバックアップする。
+        bool oldUseWinTab    = Settings.UseWinTab;
+        double oldMin        = Settings.PressureCurve.MinPressure;
+        double oldMax        = Settings.PressureCurve.MaxPressure;
+        double oldGamma      = Settings.PressureCurve.Gamma;
+
         var dlg = new Views.Dialogs.TabletSettingsDialog
         {
             Owner = Application.Current.MainWindow,
             DataContext = Settings
         };
+
         if (dlg.ShowDialog() == true)
+        {
             _settingsService.Save(Settings);
+
+            // API が切り替わった場合は TabletService を再構築する
+            if (Settings.UseWinTab != oldUseWinTab)
+                TabletServiceRebuildRequested?.Invoke();
+        }
+        else
+        {
+            // キャンセル: バインディングで書き換わった値を元に戻す
+            Settings.UseWinTab                  = oldUseWinTab;
+            Settings.PressureCurve.MinPressure  = oldMin;
+            Settings.PressureCurve.MaxPressure  = oldMax;
+            Settings.PressureCurve.Gamma        = oldGamma;
+        }
+    }
+
+    /// <summary>
+    /// 全タブの TabletService を現在の設定で再構築し、アクティブタブのサービスを初期化する。
+    /// MainWindow から Window ハンドルを渡して呼ぶ。
+    /// </summary>
+    public void RebuildTabletServices(Window window)
+    {
+        foreach (var tab in Tabs)
+        {
+            tab.TabletService?.Dispose();
+            tab.TabletService = TabletServiceFactory.Create(Settings);
+            tab.PenTool.PressureCurve = Settings.PressureCurve;
+        }
+        // WinTab は Initialize で Wacom コンテキストを開く
+        if (ActiveTab?.TabletService is WinTabTabletService wt)
+            wt.Initialize(window);
     }
 
     private void ShowGridSettings()
@@ -420,6 +509,9 @@ public class MainViewModel : ViewModelBase
         t.LineType = s.LineType;
     }
 
+
+    /// <summary>MainWindow からレイアウト保存などに使う</summary>
+    public void SaveSettings() => _settingsService.Save(Settings);
 
     private void ShowAbout()
         => new Views.Dialogs.AboutDialog { Owner = Application.Current.MainWindow }.ShowDialog();

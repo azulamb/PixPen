@@ -1,0 +1,84 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ════════════════════════════════════════════════════════
+         アプリ固有カラーリソース（App.*）
+         ════════════════════════════════════════════════════════ -->
+
+    <!-- 基本 -->
+    <SolidColorBrush x:Key="App.Bg"                     Color="#FFF0F0F0"/>
+    <SolidColorBrush x:Key="App.Panel.Bg"               Color="#FFF0F0F0"/>
+    <SolidColorBrush x:Key="App.Ctrl.Bg"                Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="App.Fg"                     Color="#FF1E1E1E"/>
+    <SolidColorBrush x:Key="App.Subtle.Fg"              Color="#FF666666"/>
+    <SolidColorBrush x:Key="App.Border"                 Color="#FFCCCCCC"/>
+    <SolidColorBrush x:Key="App.Hover"                  Color="#FFE0E0E0"/>
+    <SolidColorBrush x:Key="App.Pressed"                Color="#FFCFCFCF"/>
+    <SolidColorBrush x:Key="App.Accent"                 Color="#FF0078D7"/>
+
+    <!-- 選択 -->
+    <SolidColorBrush x:Key="App.Selected.Bg"            Color="#FF0078D7"/>
+    <SolidColorBrush x:Key="App.Selected.Fg"            Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="App.Selected.Inactive.Bg"   Color="#FFD0E8F7"/>
+    <SolidColorBrush x:Key="App.Selected.Inactive.Fg"   Color="#FF1E1E1E"/>
+
+    <!-- 無効 -->
+    <SolidColorBrush x:Key="App.Disabled.Fg"            Color="#FF999999"/>
+    <SolidColorBrush x:Key="App.Disabled.Bg"            Color="#FFF0F0F0"/>
+
+    <!-- メニュー / ツールバー -->
+    <SolidColorBrush x:Key="App.Menu.Bg"                Color="#FFF5F5F5"/>
+    <SolidColorBrush x:Key="App.Menu.Hover"             Color="#FFE5E5E5"/>
+    <SolidColorBrush x:Key="App.Menu.Separator"         Color="#FFDDDDDD"/>
+    <SolidColorBrush x:Key="App.Toolbar.Bg"             Color="#FFF0F0F0"/>
+
+    <!-- タブ -->
+    <SolidColorBrush x:Key="App.Tab.Active.Bg"          Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="App.Tab.Inactive.Bg"        Color="#FFE0E0E0"/>
+    <SolidColorBrush x:Key="App.Tab.Active.Fg"          Color="#FF1E1E1E"/>
+    <SolidColorBrush x:Key="App.Tab.Inactive.Fg"        Color="#FF666666"/>
+    <SolidColorBrush x:Key="App.Tab.Border"             Color="#FFCCCCCC"/>
+
+    <!-- スプリッター -->
+    <SolidColorBrush x:Key="App.Splitter"               Color="#FFCCCCCC"/>
+
+    <!-- ポップアップ -->
+    <SolidColorBrush x:Key="App.Popup.Bg"               Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="App.Popup.Border"           Color="#FFAAAAAA"/>
+
+    <!-- フロートウィンドウ固有 -->
+    <SolidColorBrush x:Key="App.FloatBar.Bg"            Color="#FFE8E8E8"/>
+    <SolidColorBrush x:Key="App.FloatBar.Fg"            Color="#FF1E1E1E"/>
+    <SolidColorBrush x:Key="App.FloatBtn.Bg"            Color="#FFD8D8D8"/>
+    <SolidColorBrush x:Key="App.FloatBtn.Fg"            Color="#FF1E1E1E"/>
+    <SolidColorBrush x:Key="App.FloatBtn.Border"        Color="#FFAAAAAA"/>
+
+    <!-- スクロールバー -->
+    <SolidColorBrush x:Key="App.Scrollbar.Track"        Color="#FFF0F0F0"/>
+    <SolidColorBrush x:Key="App.Scrollbar.Thumb"        Color="#FFBCBCBC"/>
+    <SolidColorBrush x:Key="App.Scrollbar.Thumb.Hover"  Color="#FF888888"/>
+
+    <!-- ════════════════════════════════════════════════════════
+         SystemColors オーバーライド（WPF 標準コントロールのテーマ対応）
+         ════════════════════════════════════════════════════════ -->
+
+    <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}"                          Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.WindowTextBrushKey}"                      Color="#FF1E1E1E"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}"                         Color="#FFF0F0F0"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}"                     Color="#FF1E1E1E"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlLightBrushKey}"                    Color="#FFFAFAFA"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlDarkBrushKey}"                     Color="#FFCCCCCC"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.ControlDarkDarkBrushKey}"                 Color="#FFAAAAAA"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"                       Color="#FF0078D7"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"                   Color="#FFFFFFFF"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"      Color="#FFD0E8F7"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"  Color="#FF1E1E1E"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.MenuBrushKey}"                            Color="#FFF5F5F5"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.MenuBarBrushKey}"                         Color="#FFF5F5F5"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.MenuTextBrushKey}"                        Color="#FF1E1E1E"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.MenuHighlightBrushKey}"                   Color="#FFE5E5E5"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.GrayTextBrushKey}"                        Color="#FF999999"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.InfoBrushKey}"                            Color="#FFFFFFCC"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.InfoTextBrushKey}"                        Color="#FF1E1E1E"/>
+
+</ResourceDictionary>

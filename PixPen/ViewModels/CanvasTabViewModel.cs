@@ -12,7 +12,12 @@ public class CanvasTabViewModel : ViewModelBase
 
     public Document Document { get; }
     public UndoRedoService UndoRedo { get; }
-    public ITabletService? TabletService { get; set; }
+    private ITabletService? _tabletService;
+    public ITabletService? TabletService
+    {
+        get => _tabletService;
+        set => SetField(ref _tabletService, value);
+    }
     public int MaxLayers { get; set; } = 100;
 
     public WriteableBitmap CompositeBitmap { get; private set; }

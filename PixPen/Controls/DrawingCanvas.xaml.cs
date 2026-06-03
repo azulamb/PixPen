@@ -15,6 +15,7 @@ namespace PixPen.Controls;
 public partial class DrawingCanvas : UserControl
 {
     private CanvasTabViewModel? _vm;
+    private WinTabTabletService? _wiredWinTab; // 現在 PacketReceived を購読中のサービス
     private Matrix _matrix = Matrix.Identity;
     private bool _isPanning;
     private Point _panStart;
@@ -84,8 +85,7 @@ public partial class DrawingCanvas : UserControl
             oldVm.CanvasSizeChanged -= OnCanvasSizeChanged;
             oldVm.PropertyChanged  -= OnVmPropertyChanged;
             oldVm.PasteRequested   -= OnPasteRequested;
-            if (oldVm.TabletService is WinTabTabletService oldWt)
-                oldWt.PacketReceived -= OnWinTabPacket;
+            UnwireWinTab();
         }
 
         if (e.NewValue is CanvasTabViewModel vm)
@@ -95,16 +95,7 @@ public partial class DrawingCanvas : UserControl
             vm.CanvasSizeChanged += OnCanvasSizeChanged;
             vm.PropertyChanged  += OnVmPropertyChanged;
             vm.PasteRequested   += OnPasteRequested;
-            if (vm.TabletService is WinTabTabletService wt)
-            {
-                wt.PacketReceived += OnWinTabPacket;
-                // WinTab 出力範囲を取得（比率マッピング用）
-                _winTabOrgX         = wt.OutOrgX;
-                _winTabOrgY         = wt.OutOrgY;
-                _winTabExtX         = wt.OutExtX;
-                _winTabExtY         = wt.OutExtY;
-                _winTabExtYNegative = wt.OutExtY < 0;
-            }
+            WireWinTab(vm.TabletService);
             CompositeImage.Source = vm.CompositeBitmap;
             ApplyCanvasSize(vm.Document.Width, vm.Document.Height);
 
@@ -211,6 +202,30 @@ public partial class DrawingCanvas : UserControl
     {
         if (e.PropertyName == nameof(CanvasTabViewModel.IsGridVisible))
             UpdateGridOverlay();
+        else if (e.PropertyName == nameof(CanvasTabViewModel.TabletService))
+        {
+            UnwireWinTab();
+            WireWinTab(_vm?.TabletService);
+        }
+    }
+
+    private void UnwireWinTab()
+    {
+        if (_wiredWinTab == null) return;
+        _wiredWinTab.PacketReceived -= OnWinTabPacket;
+        _wiredWinTab = null;
+    }
+
+    private void WireWinTab(ITabletService? svc)
+    {
+        if (svc is not WinTabTabletService wt) return;
+        _wiredWinTab = wt;
+        wt.PacketReceived += OnWinTabPacket;
+        _winTabOrgX         = wt.OutOrgX;
+        _winTabOrgY         = wt.OutOrgY;
+        _winTabExtX         = wt.OutExtX;
+        _winTabExtY         = wt.OutExtY;
+        _winTabExtYNegative = wt.OutExtY < 0;
     }
 
     // ─── ズーム・パン ────────────────────────────────────────────────────────

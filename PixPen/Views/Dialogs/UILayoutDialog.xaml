@@ -1,0 +1,103 @@
+<Window x:Class="PixPen.Views.Dialogs.UILayoutDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="UI レイアウトの設定"
+        Width="520" Height="360"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="12"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ─── 3 列レイアウト ────────────────────────────── -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>    <!-- 左パネル一覧 -->
+                <ColumnDefinition Width="44"/>   <!-- 左 ↔ 中 ボタン -->
+                <ColumnDefinition Width="*"/>    <!-- 非表示 -->
+                <ColumnDefinition Width="44"/>   <!-- 中 ↔ 右 ボタン -->
+                <ColumnDefinition Width="*"/>    <!-- 右パネル一覧 -->
+            </Grid.ColumnDefinitions>
+
+            <!-- 左パネル一覧 -->
+            <DockPanel Grid.Column="0">
+                <TextBlock DockPanel.Dock="Top"
+                           Text="左パネル" FontWeight="SemiBold"
+                           HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
+                            HorizontalAlignment="Center" Margin="0,4,0,0">
+                    <Button Content="▲" Width="30" Height="24"
+                            Margin="0,0,2,0" Click="OnLeftUp"/>
+                    <Button Content="▼" Width="30" Height="24"
+                            Click="OnLeftDown"/>
+                </StackPanel>
+                <ListBox x:Name="LeftList"
+                         SelectionMode="Single"
+                         DisplayMemberPath="DisplayName"
+                         BorderBrush="#FF555555" BorderThickness="1"/>
+            </DockPanel>
+
+            <!-- 左 ↔ 非表示 の矢印ボタン -->
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="4">
+                <Button Content="→" Height="26" ToolTip="非表示にする"
+                        Margin="0,0,0,4" Click="OnLeftToHidden"/>
+                <Button Content="←" Height="26" ToolTip="左パネルへ移動"
+                        Click="OnHiddenToLeft"/>
+            </StackPanel>
+
+            <!-- 非表示 -->
+            <DockPanel Grid.Column="2">
+                <TextBlock DockPanel.Dock="Top"
+                           Text="非表示" FontWeight="SemiBold"
+                           HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                <ListBox x:Name="HiddenList"
+                         SelectionMode="Single"
+                         DisplayMemberPath="DisplayName"
+                         BorderBrush="#FF555555" BorderThickness="1"/>
+            </DockPanel>
+
+            <!-- 非表示 ↔ 右 の矢印ボタン -->
+            <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="4">
+                <Button Content="→" Height="26" ToolTip="右パネルへ移動"
+                        Margin="0,0,0,4" Click="OnHiddenToRight"/>
+                <Button Content="←" Height="26" ToolTip="非表示にする"
+                        Click="OnRightToHidden"/>
+            </StackPanel>
+
+            <!-- 右パネル一覧 -->
+            <DockPanel Grid.Column="4">
+                <TextBlock DockPanel.Dock="Top"
+                           Text="右パネル" FontWeight="SemiBold"
+                           HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
+                            HorizontalAlignment="Center" Margin="0,4,0,0">
+                    <Button Content="▲" Width="30" Height="24"
+                            Margin="0,0,2,0" Click="OnRightUp"/>
+                    <Button Content="▼" Width="30" Height="24"
+                            Click="OnRightDown"/>
+                </StackPanel>
+                <ListBox x:Name="RightList"
+                         SelectionMode="Single"
+                         DisplayMemberPath="DisplayName"
+                         BorderBrush="#FF555555" BorderThickness="1"/>
+            </DockPanel>
+        </Grid>
+
+        <!-- ─── ボタン行 ──────────────────────────────────── -->
+        <Grid Grid.Row="2">
+            <Button HorizontalAlignment="Left"
+                    Content="デフォルトに戻す" Width="130" Height="28"
+                    Click="OnReset"/>
+            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                <Button Content="OK" Width="72" Height="28"
+                        IsDefault="True" Margin="0,0,8,0"
+                        Click="OnOk"/>
+                <Button Content="キャンセル" Width="84" Height="28"
+                        IsCancel="True"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
