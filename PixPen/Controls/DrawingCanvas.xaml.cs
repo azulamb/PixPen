@@ -35,6 +35,16 @@ public partial class DrawingCanvas : UserControl
 
     // StylusDown / WinTab が先に処理した場合に MouseDown の二重処理を防ぐフラグ
     private bool _stylusHandledStroke = false;
+
+    // ─── 選択範囲移動 ────────────────────────────────────────────────────────
+    private bool   _selectionMoving   = false;
+    private byte[]? _beforeMovePixels; // 移動前のレイヤー全体（Undo 用）
+    private byte[]? _floatingPixels;   // 選択領域のピクセルデータ
+    private int    _floatW, _floatH;  // 選択領域サイズ
+    private int    _floatX, _floatY;  // フローティング選択の現在位置
+    private int    _origX,  _origY;   // 移動開始時の選択位置
+    private Point  _moveStartPt;
+    private int    _moveLayerIndex;
     // GetPointerPenInfo 高速化のため前回の有効ポインター ID を保持
 
     public DrawingCanvas()
@@ -73,6 +83,7 @@ public partial class DrawingCanvas : UserControl
             oldVm.CanvasInvalidated -= OnCanvasInvalidated;
             oldVm.CanvasSizeChanged -= OnCanvasSizeChanged;
             oldVm.PropertyChanged  -= OnVmPropertyChanged;
+            oldVm.PasteRequested   -= OnPasteRequested;
             if (oldVm.TabletService is WinTabTabletService oldWt)
                 oldWt.PacketReceived -= OnWinTabPacket;
         }
@@ -83,6 +94,7 @@ public partial class DrawingCanvas : UserControl
             vm.CanvasInvalidated += OnCanvasInvalidated;
             vm.CanvasSizeChanged += OnCanvasSizeChanged;
             vm.PropertyChanged  += OnVmPropertyChanged;
+            vm.PasteRequested   += OnPasteRequested;
             if (vm.TabletService is WinTabTabletService wt)
             {
                 wt.PacketReceived += OnWinTabPacket;
@@ -321,6 +333,27 @@ public partial class DrawingCanvas : UserControl
         {
             var cp = ToCanvasPoint(e.GetPosition(this));
 
+            // 選択ツール × 選択範囲内クリック → 移動モード
+            if (_vm.ActiveToolKind == ToolKind.Selection &&
+                _vm.Selection.HasSelection &&
+                _vm.Selection.Contains((int)cp.X, (int)cp.Y))
+            {
+                if (_selectionMoving)
+                {
+                    // 既にフローティング中（ペーストなど）→ ドラッグ開始点だけ更新
+                    _origX = _floatX; _origY = _floatY;
+                    _moveStartPt = cp;
+                    _isDrawing = true;
+                }
+                else
+                {
+                    StartSelectionMove(cp);
+                }
+                CaptureMouse();
+                e.Handled = true;
+                return;
+            }
+
             // スポイト: 左クリック／ドラッグで色取得
             if (_vm.ActiveToolKind == ToolKind.Eyedropper)
             {
@@ -358,6 +391,14 @@ public partial class DrawingCanvas : UserControl
             _matrix.Translate(delta.X, delta.Y);
             SaveViewToVm();
             ApplyTransform();
+            e.Handled = true;
+            return;
+        }
+
+        // 選択範囲移動中
+        if (_selectionMoving && e.LeftButton == MouseButtonState.Pressed)
+        {
+            UpdateSelectionMove(ToCanvasPoint(e.GetPosition(this)));
             e.Handled = true;
             return;
         }
@@ -456,16 +497,25 @@ public partial class DrawingCanvas : UserControl
         {
             Focus();
             _stylusHandledStroke = true;
-            BeginStroke(canvasPt, args.Pressure, args.IsEraser);
+            // 選択ツール × 選択範囲内タッチ → 移動モード
+            if (_vm?.ActiveToolKind == ToolKind.Selection &&
+                _vm.Selection.HasSelection &&
+                _vm.Selection.Contains((int)canvasPt.X, (int)canvasPt.Y))
+                StartSelectionMove(canvasPt);
+            else
+                BeginStroke(canvasPt, args.Pressure, args.IsEraser);
         }
         else if (args.IsDown && _isDrawing)
         {
-            ContinueStroke(canvasPt, args.Pressure, args.IsEraser);
+            if (_selectionMoving)
+                UpdateSelectionMove(canvasPt);
+            else
+                ContinueStroke(canvasPt, args.Pressure, args.IsEraser);
         }
-        else if (!args.IsDown && wasDown && _isDrawing)
+        else if (!args.IsDown && wasDown)
         {
-            _stylusHandledStroke = false;
-            EndStroke();
+            if (_selectionMoving) EndSelectionMove();
+            else if (_isDrawing) { _stylusHandledStroke = false; EndStroke(); }
         }
     }
 
@@ -505,6 +555,7 @@ public partial class DrawingCanvas : UserControl
         ReleaseMouseCapture();
 
         if (_isPanning) { _isPanning = false; return; }
+        if (_selectionMoving) { EndSelectionMove(); e.Handled = true; return; }
         if (_isDrawing) { EndStroke(); e.Handled = true; }
     }
 
@@ -599,6 +650,9 @@ public partial class DrawingCanvas : UserControl
     {
         if (_vm == null || _vm.ActiveLayer == null || _vm.ActiveLayer.Bitmap == null) return;
 
+        // 移動中に別のストロークが始まる場合（例: 選択外クリック）は先に移動を確定する
+        if (_selectionMoving) EndSelectionMove();
+
         // ストローク開始時に選択中のペン定義を PenTool と同期する。
         // 同じオブジェクト参照を共有するため、UI での Size 等の変更が次ストロークから反映される。
         if (!isEraser && _vm.PenPanel.SelectedPen != null)
@@ -654,6 +708,204 @@ public partial class DrawingCanvas : UserControl
 
         _strokeBeforePixels = null;
         if (_vm != null) _vm.Document.IsModified = true;
+    }
+
+    // ─── 選択範囲移動 ────────────────────────────────────────────────────────
+
+    private void OnPasteRequested(byte[] pixels, int pixW, int pixH)
+        => ActivatePaste(pixels, pixW, pixH);
+
+    /// <summary>
+    /// クリップボードからのペーストをフローティング選択として開始する。
+    /// レイヤーは変更せず、確定時にアルファ合成する。
+    /// </summary>
+    private void ActivatePaste(byte[] pixels, int pixW, int pixH)
+    {
+        if (_vm?.ActiveLayer?.Bitmap == null) return;
+        var layer = _vm.ActiveLayer;
+        int bW = layer.Width, bH = layer.Height;
+
+        // Undo 用バックアップ（ペースト前の状態）
+        _beforeMovePixels = new byte[bW * bH * 4];
+        layer.Bitmap.CopyPixels(new Int32Rect(0, 0, bW, bH), _beforeMovePixels, bW * 4, 0);
+
+        // ペースト位置: ドキュメント中央（範囲外にはみ出る場合は 0,0 に補正）
+        int pasteX = Math.Max(0, (bW - pixW) / 2);
+        int pasteY = Math.Max(0, (bH - pixH) / 2);
+
+        _moveLayerIndex = _vm.ActiveLayerIndex;
+        _floatW = pixW; _floatH = pixH;
+        _floatingPixels = pixels;
+        _floatX = pasteX; _floatY = pasteY;
+        _origX  = pasteX; _origY  = pasteY;
+        _moveStartPt = new Point(pasteX + pixW / 2.0, pasteY + pixH / 2.0);
+        _selectionMoving = true;
+        _isDrawing = false; // ペーストは即 commit が必要ないのでフローティング状態を維持
+
+        _vm.Selection.SetRect(pasteX, pasteY, pixW, pixH);
+        _vm.ActiveToolKind = ToolKind.Selection; // 選択ツールに自動切り替え
+
+        var overlay = new System.Windows.Media.Imaging.WriteableBitmap(
+            pixW, pixH, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null);
+        overlay.WritePixels(new Int32Rect(0, 0, pixW, pixH), pixels, pixW * 4, 0);
+        _vm.SetFloatingOverlay(overlay, pasteX, pasteY);
+        _vm.RecompositeAll();
+        Focus();
+    }
+
+    /// <summary>
+    /// 選択範囲内クリック時に移動モードを開始する。
+    /// 選択領域をレイヤーから切り取り、フローティングオーバーレイとして表示する。
+    /// </summary>
+    private void StartSelectionMove(Point canvasPoint)
+    {
+        if (_vm?.ActiveLayer?.Bitmap == null) return;
+        var layer = _vm.ActiveLayer;
+        var sel   = _vm.Selection;
+        int bW = layer.Width, bH = layer.Height;
+
+        int sx = Math.Max(0, sel.X), sy = Math.Max(0, sel.Y);
+        int sw = Math.Min(sel.Width,  bW - sx);
+        int sh = Math.Min(sel.Height, bH - sy);
+        if (sw <= 0 || sh <= 0) return;
+
+        _moveLayerIndex = _vm.ActiveLayerIndex;
+
+        // ① Undo 用バックアップ（切り取り前の完全な状態）
+        _beforeMovePixels = new byte[bW * bH * 4];
+        layer.Bitmap.CopyPixels(new Int32Rect(0, 0, bW, bH), _beforeMovePixels, bW * 4, 0);
+
+        // ② 選択ピクセルを抽出
+        _floatW = sw; _floatH = sh;
+        _floatingPixels = new byte[sw * sh * 4];
+        layer.Bitmap.CopyPixels(new Int32Rect(sx, sy, sw, sh), _floatingPixels, sw * 4, 0);
+
+        // ③ 切り取り: 元の位置を透明にする（"穴"を開ける）
+        layer.Bitmap.WritePixels(
+            new Int32Rect(sx, sy, sw, sh),
+            new byte[sw * sh * 4], sw * 4, 0);
+
+        // ④ フローティングオーバーレイ用ビットマップを作成
+        var overlay = new System.Windows.Media.Imaging.WriteableBitmap(
+            sw, sh, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null);
+        overlay.WritePixels(new Int32Rect(0, 0, sw, sh), _floatingPixels, sw * 4, 0);
+
+        _floatX = sel.X; _floatY = sel.Y;
+        _origX  = sel.X; _origY  = sel.Y;
+        _moveStartPt = canvasPoint;
+        _selectionMoving = true;
+        _isDrawing = true;
+
+        _vm.SetFloatingOverlay(overlay, _floatX, _floatY);
+        _vm.RecompositeAll(); // 穴 + オーバーレイを表示
+    }
+
+    /// <summary>ドラッグ中：オーバーレイ位置を更新するだけでレイヤーは変更しない</summary>
+    private void UpdateSelectionMove(Point canvasPoint)
+    {
+        if (_vm == null || _floatingPixels == null) return;
+
+        int dx = (int)(canvasPoint.X - _moveStartPt.X);
+        int dy = (int)(canvasPoint.Y - _moveStartPt.Y);
+        int newX = _origX + dx;
+        int newY = _origY + dy;
+        if (newX == _floatX && newY == _floatY) return;
+
+        int bW = _vm.Document.Width, bH = _vm.Document.Height;
+        var prevRect = new Int32Rect(_floatX, _floatY, _floatW, _floatH);
+        var newRect  = new Int32Rect(newX,    newY,    _floatW, _floatH);
+        var holeRect = new Int32Rect(_origX,  _origY,  _floatW, _floatH); // 穴の位置
+
+        _floatX = newX; _floatY = newY;
+        _vm.Selection.SetRect(newX, newY, _floatW, _floatH);
+        _vm.UpdateFloatingOverlayPos(newX, newY);
+
+        // 穴 + 前フレーム + 新フレームすべてを再合成範囲に含める
+        var dirty = SelectionUnionRect(
+            SelectionUnionRect(prevRect, holeRect, bW, bH),
+            newRect, bW, bH);
+        if (dirty.Width > 0) _vm.RecompositeRegion(dirty);
+    }
+
+    /// <summary>
+    /// 移動を確定する：フローティングピクセルをレイヤーにアルファ合成して Undo を記録。
+    /// </summary>
+    private void EndSelectionMove()
+    {
+        if (_vm?.ActiveLayer?.Bitmap == null || _floatingPixels == null || _beforeMovePixels == null) return;
+        var layer = _vm.ActiveLayer;
+        int bW = layer.Width, bH = layer.Height;
+
+        _vm.ClearFloatingOverlay();
+
+        // フローティングピクセルをレイヤーにアルファ合成（元のコンテンツを保持）
+        SelectionCompositeToLayer(layer.Bitmap, _floatingPixels, _floatW, _floatH, _floatX, _floatY);
+
+        var afterPixels = new byte[bW * bH * 4];
+        layer.Bitmap.CopyPixels(new Int32Rect(0, 0, bW, bH), afterPixels, bW * 4, 0);
+        _vm.PushStrokeUndo(_moveLayerIndex, new Int32Rect(0, 0, bW, bH), _beforeMovePixels, afterPixels);
+        _vm.Document.IsModified = true;
+        _vm.RefreshTitle();
+        _vm.RecompositeAll();
+
+        _selectionMoving = false;
+        _beforeMovePixels = null;
+        _floatingPixels = null;
+        _isDrawing = false;
+    }
+
+    /// <summary>フローティングピクセルをレイヤーにアルファ合成する</summary>
+    private static unsafe void SelectionCompositeToLayer(
+        System.Windows.Media.Imaging.WriteableBitmap bmp,
+        byte[] pixels, int pixW, int pixH, int destX, int destY)
+    {
+        int bW = bmp.PixelWidth, bH = bmp.PixelHeight;
+        int cx = Math.Max(0, destX), cy = Math.Max(0, destY);
+        int cx2 = Math.Min(bW, destX + pixW), cy2 = Math.Min(bH, destY + pixH);
+        if (cx >= cx2 || cy >= cy2) return;
+
+        int srcOffX = cx - destX, srcOffY = cy - destY;
+
+        bmp.Lock();
+        byte* dstPtr = (byte*)bmp.BackBuffer;
+        int dstStride = bmp.BackBufferStride;
+
+        for (int y = cy; y < cy2; y++)
+        for (int x = cx; x < cx2; x++)
+        {
+            int srcIdx = ((y - cy + srcOffY) * pixW + (x - cx + srcOffX)) * 4;
+            byte* dst  = dstPtr + y * dstStride + x * 4;
+            byte srcB = pixels[srcIdx], srcG = pixels[srcIdx+1],
+                 srcR = pixels[srcIdx+2], srcA = pixels[srcIdx+3];
+            if (srcA == 0) continue;
+            if (srcA == 255) { dst[0]=srcB; dst[1]=srcG; dst[2]=srcR; dst[3]=srcA; }
+            else
+            {
+                // アルファ合成（Porter-Duff over）
+                int dstA = dst[3];
+                int outA = srcA + dstA * (255 - srcA) / 255;
+                if (outA > 0)
+                {
+                    dst[0] = (byte)((srcB * srcA + dst[0] * dstA * (255 - srcA) / 255) / outA);
+                    dst[1] = (byte)((srcG * srcA + dst[1] * dstA * (255 - srcA) / 255) / outA);
+                    dst[2] = (byte)((srcR * srcA + dst[2] * dstA * (255 - srcA) / 255) / outA);
+                    dst[3] = (byte)outA;
+                }
+            }
+        }
+
+        bmp.AddDirtyRect(new Int32Rect(cx, cy, cx2 - cx, cy2 - cy));
+        bmp.Unlock();
+    }
+
+    /// <summary>2つの矩形の和をビットマップ範囲でクリップして返す</summary>
+    private static Int32Rect SelectionUnionRect(Int32Rect a, Int32Rect b, int bW, int bH)
+    {
+        int x0 = Math.Max(0, Math.Min(a.X, b.X));
+        int y0 = Math.Max(0, Math.Min(a.Y, b.Y));
+        int x1 = Math.Min(bW, Math.Max(a.X + a.Width,  b.X + b.Width));
+        int y1 = Math.Min(bH, Math.Max(a.Y + a.Height, b.Y + b.Height));
+        return x0 < x1 && y0 < y1 ? new Int32Rect(x0, y0, x1 - x0, y1 - y0) : default;
     }
 
     /// <summary>塗りつぶしをUndoに対応した形で1回実行する</summary>

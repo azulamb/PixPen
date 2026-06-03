@@ -92,9 +92,10 @@ public class MainViewModel : ViewModelBase
     // 編集
     public RelayCommand UndoCommand { get; }
     public RelayCommand RedoCommand { get; }
-    public RelayCommand CutCommand { get; }
-    public RelayCommand CopyCommand { get; }
-    public RelayCommand PasteCommand { get; }
+    public RelayCommand CutCommand    { get; }
+    public RelayCommand CopyCommand   { get; }
+    public RelayCommand PasteCommand  { get; }
+    public RelayCommand DeleteCommand { get; }
 
     // 表示
     public RelayCommand ToggleGridCommand { get; }
@@ -123,9 +124,10 @@ public class MainViewModel : ViewModelBase
         // 編集
         UndoCommand = new RelayCommand(Undo, () => ActiveTab?.UndoRedo.CanUndo ?? false);
         RedoCommand = new RelayCommand(Redo, () => ActiveTab?.UndoRedo.CanRedo ?? false);
-        CutCommand = new RelayCommand(Cut, () => ActiveTab?.Selection.HasSelection ?? false);
-        CopyCommand = new RelayCommand(Copy, () => ActiveTab?.Selection.HasSelection ?? false);
-        PasteCommand = new RelayCommand(Paste);
+        CutCommand    = new RelayCommand(Cut,    () => ActiveTab?.Selection.HasSelection ?? false);
+        CopyCommand   = new RelayCommand(Copy,   () => ActiveTab?.Selection.HasSelection ?? false);
+        PasteCommand  = new RelayCommand(Paste,  () => System.Windows.Clipboard.ContainsImage());
+        DeleteCommand = new RelayCommand(Delete, () => ActiveTab?.Selection.HasSelection ?? false);
 
         // 表示
         ToggleGridCommand = new RelayCommand(() => IsGridVisible = !IsGridVisible);
@@ -274,11 +276,12 @@ public class MainViewModel : ViewModelBase
 
     // ─── 編集 ──────────────────────────────────────────────────────────────
 
-    private void Undo() => ActiveTab?.Undo();
-    private void Redo() => ActiveTab?.Redo();
-    private void Cut() => ActiveTab?.SelectionTool.CutSelection(ActiveTab.ActiveLayer!);
-    private void Copy() { /* TODO: クリップボード */ }
-    private void Paste() { /* TODO: クリップボード貼り付け */ }
+    private void Undo()   => ActiveTab?.Undo();
+    private void Redo()   => ActiveTab?.Redo();
+    private void Cut()    => ActiveTab?.CutSelection();
+    private void Copy()   => ActiveTab?.CopySelectionToClipboard();
+    private void Paste()  => ActiveTab?.PasteFromClipboard();
+    private void Delete() => ActiveTab?.DeleteSelection();
 
     // ─── ダイアログ ────────────────────────────────────────────────────────
 
