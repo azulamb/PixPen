@@ -27,6 +27,9 @@ public class LayerViewModel : ViewModelBase
         set { if (_layer.IsLocked != value) { _layer.IsLocked = value; OnPropertyChanged(); } }
     }
 
+    /// <summary>参照レイヤーかどうか（読み取り専用）</summary>
+    public bool IsReference => _layer.IsReference;
+
     public double Opacity
     {
         get => _layer.Opacity;

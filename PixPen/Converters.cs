@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using PixPen.Services;
@@ -12,6 +13,23 @@ public class NullToBoolConverter : IValueConverter
         => value is not null;
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
+/// 2 つの Color が一致するとき Visibility.Visible を返す。
+/// スウォッチの選択状態インジケーターに使用。
+/// </summary>
+public class ColorMatchConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values.Length == 2 && values[0] is Color c1 && values[1] is Color c2)
+            return c1 == c2 ? Visibility.Visible : Visibility.Collapsed;
+        return Visibility.Collapsed;
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
 

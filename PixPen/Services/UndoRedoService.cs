@@ -56,6 +56,33 @@ public class LayerRemoveUndoAction : UndoAction
     public override void Redo(Document doc, Action<int> onLayerModified) => doc.Layers.RemoveAt(LayerIndex);
 }
 
+/// <summary>参照レイヤーの変形（移動・拡縮）を Undo/Redo するアクション</summary>
+public class RefTransformUndoAction : UndoAction
+{
+    public Layer Layer { get; init; } = null!;
+    public double OldX { get; init; } public double OldY { get; init; }
+    public double OldW { get; init; } public double OldH { get; init; }
+    public double NewX { get; init; } public double NewY { get; init; }
+    public double NewW { get; init; } public double NewH { get; init; }
+    public Action? Recomposite { get; init; }
+
+    public override long MemoryBytes => 0;
+
+    public override void Undo(Document doc, Action<int> onLayerModified)
+    {
+        Layer.RefX = OldX; Layer.RefY = OldY;
+        Layer.RefWidth = OldW; Layer.RefHeight = OldH;
+        Recomposite?.Invoke();
+    }
+
+    public override void Redo(Document doc, Action<int> onLayerModified)
+    {
+        Layer.RefX = NewX; Layer.RefY = NewY;
+        Layer.RefWidth = NewW; Layer.RefHeight = NewH;
+        Recomposite?.Invoke();
+    }
+}
+
 public class UndoRedoService
 {
     private readonly LinkedList<UndoAction> _undoStack = new();

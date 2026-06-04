@@ -14,8 +14,9 @@
 
             <!-- ─── コンバーター ─────────────────────────────────────── -->
             <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
-            <local:NullToBoolConverter   x:Key="NullToBoolConverter"/>
+            <local:NullToBoolConverter    x:Key="NullToBoolConverter"/>
             <local:StringToColorConverter x:Key="StringToColorConverter"/>
+            <local:ColorMatchConverter    x:Key="ColorMatchConverter"/>
 
             <!-- ─── ToolBar の RadioButton スタイル ───────────────────── -->
             <!-- ToolRadioStyle: ToolBar 専用。テーマカラーを DynamicResource で参照 -->

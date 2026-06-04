@@ -56,6 +56,34 @@ public class LayerPanelViewModel : ViewModelBase
         OnPropertyChanged(nameof(SelectedIndex));
     }
 
+    /// <summary>
+    /// 画像を持つ参照レイヤーを追加する。
+    /// ドロップ先のキャンバス座標を中心として配置する。
+    /// </summary>
+    public void AddReferenceLayer(
+        System.Windows.Media.Imaging.WriteableBitmap source,
+        string name, double centerX, double centerY)
+    {
+        double w = source.PixelWidth;
+        double h = source.PixelHeight;
+        var layer = new Layer
+        {
+            Name            = name,
+            IsReference     = true,
+            ReferenceSource = source,
+            RefX            = centerX - w / 2,
+            RefY            = centerY - h / 2,
+            RefWidth        = w,
+            RefHeight       = h,
+        };
+        int insertAt = SelectedIndex >= 0 ? SelectedIndex : 0;
+        _tab.Document.Layers.Insert(insertAt, layer);
+        _tab.UndoRedo.Push(new LayerAddUndoAction { LayerIndex = insertAt, Layer = layer });
+        SyncFromDocument();
+        SelectedIndex = insertAt;
+        _tab.RecompositeAll();
+    }
+
     private void AddLayer()
     {
         var doc = _tab.Document;

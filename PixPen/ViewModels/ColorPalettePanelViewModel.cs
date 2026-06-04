@@ -27,7 +27,40 @@ public class ColorPalettePanelViewModel : ViewModelBase
                 OnPropertyChanged(nameof(G));
                 OnPropertyChanged(nameof(B));
                 OnPropertyChanged(nameof(OpaqueColor));
+                OnPropertyChanged(nameof(HexCode));
             }
+        }
+    }
+
+    // ─── HEX カラーコード ─────────────────────────────────────────────────────
+
+    /// <summary>AARRGGBB 形式のカラーコード（# なし）。スライダーと双方向連動。</summary>
+    public string HexCode
+    {
+        get => $"{_alpha:X2}{_foreground.R:X2}{_foreground.G:X2}{_foreground.B:X2}";
+        set
+        {
+            // # を除いて正規化
+            var s = (value ?? "").Trim().TrimStart('#').ToUpperInvariant();
+            if (!s.All(c => c is >= '0' and <= '9' or >= 'A' and <= 'F')) return;
+
+            if (s.Length == 6)
+            {
+                byte r = Convert.ToByte(s[0..2], 16);
+                byte g = Convert.ToByte(s[2..4], 16);
+                byte b = Convert.ToByte(s[4..6], 16);
+                Foreground = Color.FromArgb(_alpha, r, g, b);
+            }
+            else if (s.Length == 8)
+            {
+                byte a = Convert.ToByte(s[0..2], 16);
+                byte r = Convert.ToByte(s[2..4], 16);
+                byte g = Convert.ToByte(s[4..6], 16);
+                byte b = Convert.ToByte(s[6..8], 16);
+                _alpha = a;
+                Foreground = Color.FromArgb(a, r, g, b);
+            }
+            // 不完全な入力は無視（入力途中を保護するため OnPropertyChanged も起こさない）
         }
     }
 
@@ -195,6 +228,7 @@ public class ColorPalettePanelViewModel : ViewModelBase
         OnPropertyChanged(nameof(G));
         OnPropertyChanged(nameof(B));
         OnPropertyChanged(nameof(OpaqueColor));
+        OnPropertyChanged(nameof(HexCode));
         UpdateHsv(_foreground);
     }
 

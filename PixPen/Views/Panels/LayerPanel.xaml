@@ -63,7 +63,25 @@
                             <ColumnDefinition Width="44"/><!-- 不透明度 -->
                         </Grid.ColumnDefinitions>
 
-                        <!-- ── 表示/非表示（目アイコン） ────────────────── -->
+                        <!-- ── 参照レイヤーインジケーター ───────────────── -->
+                        <iconPacks:PackIconMaterial Grid.Column="0"
+                            Kind="ImageOutline" Width="12" Height="12"
+                            ToolTip="参照レイヤー（描画不可・変形可）"
+                            VerticalAlignment="Center" HorizontalAlignment="Center"
+                            Opacity="0.8">
+                            <iconPacks:PackIconMaterial.Style>
+                                <Style TargetType="iconPacks:PackIconMaterial">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsReference}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </iconPacks:PackIconMaterial.Style>
+                        </iconPacks:PackIconMaterial>
+
+                        <!-- ── 表示/非表示（目アイコン）参照レイヤー時は非表示 ── -->
                         <ToggleButton Grid.Column="0"
                                       IsChecked="{Binding IsVisible, Mode=TwoWay}"
                                       Click="OnVisibilityClick"
@@ -99,6 +117,10 @@
                                                 </Setter.Value>
                                             </Setter>
                                         </Trigger>
+                                        <!-- 参照レイヤーのとき目アイコン不要（代わりに画像アイコンを表示） -->
+                                        <DataTrigger Binding="{Binding IsReference}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </ToggleButton.Style>
@@ -155,7 +177,7 @@
 
                         <!-- ── 不透明度 ──────────────────────────────── -->
                         <TextBox Grid.Column="3"
-                                 Text="{Binding OpacityPercent, UpdateSourceTrigger=LostFocus}"
+                                 Text="{Binding OpacityPercent, UpdateSourceTrigger=PropertyChanged}"
                                  VerticalAlignment="Center"
                                  TextAlignment="Right"
                                  Width="40"

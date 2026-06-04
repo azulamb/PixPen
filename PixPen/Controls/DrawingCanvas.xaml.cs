@@ -207,6 +207,10 @@ public partial class DrawingCanvas : UserControl
             UnwireWinTab();
             WireWinTab(_vm?.TabletService);
         }
+        else if (e.PropertyName == nameof(CanvasTabViewModel.ActiveLayerIndex))
+        {
+            UpdateRefOverlay();
+        }
     }
 
     private void UnwireWinTab()
@@ -308,6 +312,7 @@ public partial class DrawingCanvas : UserControl
 
         UpdateGridOverlay();
         UpdateSelectionOverlay();
+        UpdateRefOverlay();
     }
 
     private void SaveViewToVm()
@@ -347,6 +352,9 @@ public partial class DrawingCanvas : UserControl
         if (e.LeftButton == MouseButtonState.Pressed)
         {
             var cp = ToCanvasPoint(e.GetPosition(this));
+
+            // 参照レイヤーが選択中 → 変形ドラッグ優先
+            if (TryBeginRefDrag(cp, e)) return;
 
             // 選択ツール × 選択範囲内クリック → 移動モード
             if (_vm.ActiveToolKind == ToolKind.Selection &&
@@ -406,6 +414,14 @@ public partial class DrawingCanvas : UserControl
             _matrix.Translate(delta.X, delta.Y);
             SaveViewToVm();
             ApplyTransform();
+            e.Handled = true;
+            return;
+        }
+
+        // 参照レイヤー変形中
+        if (_refDragMode != RefDragMode.None && e.LeftButton == MouseButtonState.Pressed)
+        {
+            TryContinueRefDrag(ToCanvasPoint(e.GetPosition(this)));
             e.Handled = true;
             return;
         }
@@ -567,6 +583,7 @@ public partial class DrawingCanvas : UserControl
     {
         if (_vm == null) return;
         if (_stylusHandledStroke) return;
+        if (TryEndRefDrag()) { ReleaseMouseCapture(); e.Handled = true; return; }
         ReleaseMouseCapture();
 
         if (_isPanning) { _isPanning = false; return; }
@@ -665,6 +682,7 @@ public partial class DrawingCanvas : UserControl
     {
         if (_vm == null || _vm.ActiveLayer == null || _vm.ActiveLayer.Bitmap == null) return;
         if (_vm.ActiveLayer.IsLocked) return;
+        if (_vm.ActiveLayer.IsReference) return;  // 参照レイヤーへの描画禁止
 
         // 移動中に別のストロークが始まる場合（例: 選択外クリック）は先に移動を確定する
         if (_selectionMoving) EndSelectionMove();
@@ -1053,5 +1071,267 @@ public partial class DrawingCanvas : UserControl
         SelectionRect.Height = sel.Height;
         SelectionRect.StrokeThickness = 1.0 / _matrix.M11;
         SelectionRect.Visibility = Visibility.Visible;
+    }
+
+    // ─── 参照レイヤー ────────────────────────────────────────────────────────
+
+    private enum RefDragMode { None, Move, TopLeft, TopRight, BottomLeft, BottomRight }
+    private RefDragMode _refDragMode   = RefDragMode.None;
+    private Point       _refDragStart;
+    private double      _refStartX, _refStartY, _refStartW, _refStartH;
+    // Undo 用バックアップ（ドラッグ開始時）
+    private double      _refUndoX, _refUndoY, _refUndoW, _refUndoH;
+
+    private bool IsRefLayer => _vm?.ActiveLayer?.IsReference == true;
+
+    /// <summary>参照レイヤーに対するマウス Down 処理</summary>
+    private bool TryBeginRefDrag(Point canvasPt, MouseButtonEventArgs e)
+    {
+        if (!IsRefLayer) return false;
+        var layer = _vm!.ActiveLayer!;
+
+        double zoom = _matrix.M11;
+        double hSize = 10.0 / zoom; // ハンドルのヒット判定サイズ（スクリーン px 換算）
+        double rx = layer.RefX, ry = layer.RefY;
+        double rw = layer.EffectiveRefWidth, rh = layer.EffectiveRefHeight;
+
+        _refStartX = rx; _refStartY = ry; _refStartW = rw; _refStartH = rh;
+        _refUndoX  = rx; _refUndoY  = ry; _refUndoW  = rw; _refUndoH  = rh;
+        _refDragStart = canvasPt;
+
+        // コーナーハンドル判定
+        if (IsNearPoint(canvasPt, rx,      ry,      hSize)) { _refDragMode = RefDragMode.TopLeft;     }
+        else if (IsNearPoint(canvasPt, rx + rw, ry,      hSize)) { _refDragMode = RefDragMode.TopRight;    }
+        else if (IsNearPoint(canvasPt, rx,      ry + rh, hSize)) { _refDragMode = RefDragMode.BottomLeft;  }
+        else if (IsNearPoint(canvasPt, rx + rw, ry + rh, hSize)) { _refDragMode = RefDragMode.BottomRight; }
+        else if (canvasPt.X >= rx - hSize && canvasPt.X <= rx + rw + hSize &&
+                 canvasPt.Y >= ry - hSize && canvasPt.Y <= ry + rh + hSize)
+        {
+            _refDragMode = RefDragMode.Move;
+        }
+        else
+        {
+            _refDragMode = RefDragMode.None;
+            return false;
+        }
+
+        CaptureMouse();
+        e.Handled = true;
+        return true;
+    }
+
+    /// <summary>参照レイヤーに対するマウス Move 処理</summary>
+    private bool TryContinueRefDrag(Point canvasPt)
+    {
+        if (_refDragMode == RefDragMode.None) return false;
+        var layer = _vm?.ActiveLayer;
+        if (layer == null || !layer.IsReference) { _refDragMode = RefDragMode.None; return false; }
+
+        double dx = canvasPt.X - _refDragStart.X;
+        double dy = canvasPt.Y - _refDragStart.Y;
+        const double minSize = 8;
+        // Ctrl 押下中はアスペクト比を維持する
+        bool lockAspect = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+        double aspect = _refStartH > 0 ? _refStartW / _refStartH : 1.0;
+
+        switch (_refDragMode)
+        {
+            case RefDragMode.Move:
+                layer.RefX = _refStartX + dx;
+                layer.RefY = _refStartY + dy;
+                break;
+
+            case RefDragMode.TopLeft:
+            {
+                double newW = Math.Max(minSize, _refStartW - dx);
+                double newH = Math.Max(minSize, _refStartH - dy);
+                if (lockAspect)
+                {
+                    // 変化量の大きい方に合わせてもう一方を決める
+                    if (Math.Abs(dx) >= Math.Abs(dy)) newH = newW / aspect;
+                    else                              newW = newH * aspect;
+                    newW = Math.Max(minSize, newW);
+                    newH = Math.Max(minSize, newH);
+                }
+                layer.RefX      = _refStartX + _refStartW - newW;
+                layer.RefY      = _refStartY + _refStartH - newH;
+                layer.RefWidth  = newW;
+                layer.RefHeight = newH;
+                break;
+            }
+            case RefDragMode.TopRight:
+            {
+                double newW = Math.Max(minSize, _refStartW + dx);
+                double newH = Math.Max(minSize, _refStartH - dy);
+                if (lockAspect)
+                {
+                    if (Math.Abs(dx) >= Math.Abs(dy)) newH = newW / aspect;
+                    else                              newW = newH * aspect;
+                    newW = Math.Max(minSize, newW);
+                    newH = Math.Max(minSize, newH);
+                }
+                layer.RefY      = _refStartY + _refStartH - newH;
+                layer.RefWidth  = newW;
+                layer.RefHeight = newH;
+                break;
+            }
+            case RefDragMode.BottomLeft:
+            {
+                double newW = Math.Max(minSize, _refStartW - dx);
+                double newH = Math.Max(minSize, _refStartH + dy);
+                if (lockAspect)
+                {
+                    if (Math.Abs(dx) >= Math.Abs(dy)) newH = newW / aspect;
+                    else                              newW = newH * aspect;
+                    newW = Math.Max(minSize, newW);
+                    newH = Math.Max(minSize, newH);
+                }
+                layer.RefX      = _refStartX + _refStartW - newW;
+                layer.RefWidth  = newW;
+                layer.RefHeight = newH;
+                break;
+            }
+            case RefDragMode.BottomRight:
+            {
+                double newW = Math.Max(minSize, _refStartW + dx);
+                double newH = Math.Max(minSize, _refStartH + dy);
+                if (lockAspect)
+                {
+                    if (Math.Abs(dx) >= Math.Abs(dy)) newH = newW / aspect;
+                    else                              newW = newH * aspect;
+                    newW = Math.Max(minSize, newW);
+                    newH = Math.Max(minSize, newH);
+                }
+                layer.RefWidth  = newW;
+                layer.RefHeight = newH;
+                break;
+            }
+        }
+
+        _vm?.RecompositeAll();
+        UpdateRefOverlay();
+        return true;
+    }
+
+    /// <summary>参照レイヤーに対するマウス Up 処理</summary>
+    private bool TryEndRefDrag()
+    {
+        if (_refDragMode == RefDragMode.None) return false;
+        var layer = _vm?.ActiveLayer;
+        if (layer != null && layer.IsReference)
+        {
+            // 変形を Undo に登録
+            double newX = layer.RefX, newY = layer.RefY;
+            double newW = layer.RefWidth, newH = layer.RefHeight;
+            if (newX != _refUndoX || newY != _refUndoY || newW != _refUndoW || newH != _refUndoH)
+            {
+                var captured = layer;
+                double ox = _refUndoX, oy = _refUndoY, ow = _refUndoW, oh = _refUndoH;
+                _vm!.UndoRedo.Push(new RefTransformUndoAction
+                {
+                    Layer    = captured,
+                    OldX = ox, OldY = oy, OldW = ow, OldH = oh,
+                    NewX = newX, NewY = newY, NewW = newW, NewH = newH,
+                    Recomposite = () => { _vm?.RecompositeAll(); UpdateRefOverlay(); }
+                });
+            }
+        }
+        _refDragMode = RefDragMode.None;
+        return true;
+    }
+
+    private static bool IsNearPoint(Point p, double tx, double ty, double d)
+        => Math.Abs(p.X - tx) <= d && Math.Abs(p.Y - ty) <= d;
+
+    /// <summary>参照レイヤー変形ハンドルオーバーレイを更新する</summary>
+    private void UpdateRefOverlay()
+    {
+        if (_vm?.ActiveLayer is not { IsReference: true } layer)
+        {
+            RefOverlay.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        double rx = layer.RefX, ry = layer.RefY;
+        double rw = layer.EffectiveRefWidth, rh = layer.EffectiveRefHeight;
+
+        RefOverlay.Visibility = Visibility.Visible;
+        double strokeW = 1.0 / _matrix.M11;
+        RefBorderRect.StrokeThickness = strokeW;
+
+        Canvas.SetLeft(RefBorderRect, rx);
+        Canvas.SetTop (RefBorderRect, ry);
+        RefBorderRect.Width  = rw;
+        RefBorderRect.Height = rh;
+
+        // ハンドルサイズ（常に 6 スクリーン px）
+        double hs = 6.0 / _matrix.M11;
+        SetHandle(RefHandleTL, rx - hs / 2,      ry - hs / 2,      hs);
+        SetHandle(RefHandleTR, rx + rw - hs / 2, ry - hs / 2,      hs);
+        SetHandle(RefHandleBL, rx - hs / 2,      ry + rh - hs / 2, hs);
+        SetHandle(RefHandleBR, rx + rw - hs / 2, ry + rh - hs / 2, hs);
+    }
+
+    private static void SetHandle(System.Windows.Shapes.Rectangle rect, double x, double y, double size)
+    {
+        Canvas.SetLeft(rect, x);
+        Canvas.SetTop (rect, y);
+        rect.Width  = size;
+        rect.Height = size;
+    }
+
+    // ─── 画像ドロップ ────────────────────────────────────────────────────────
+
+    private static readonly string[] ImageExtensions =
+        { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tiff", ".tif", ".webp" };
+
+    private void OnImageDragOver(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            var files = e.Data.GetData(DataFormats.FileDrop) as string[];
+            if (files?.Any(f => ImageExtensions.Contains(
+                    System.IO.Path.GetExtension(f).ToLowerInvariant())) == true)
+            {
+                e.Effects = DragDropEffects.Copy;
+                e.Handled = true;
+                return;
+            }
+        }
+        e.Effects = DragDropEffects.None;
+    }
+
+    private void OnImageDrop(object sender, DragEventArgs e)
+    {
+        if (_vm == null || !e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+        var files = e.Data.GetData(DataFormats.FileDrop) as string[];
+        if (files == null) return;
+
+        var imagePath = files.FirstOrDefault(f =>
+            ImageExtensions.Contains(System.IO.Path.GetExtension(f).ToLowerInvariant()));
+        if (imagePath == null) return;
+
+        try
+        {
+            var bmp = new System.Windows.Media.Imaging.BitmapImage();
+            bmp.BeginInit();
+            bmp.UriSource = new Uri(imagePath);
+            bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+            bmp.EndInit();
+            bmp.Freeze();
+
+            var source = new System.Windows.Media.Imaging.WriteableBitmap(
+                new System.Windows.Media.Imaging.FormatConvertedBitmap(
+                    bmp, System.Windows.Media.PixelFormats.Bgra32, null, 0));
+
+            var dropPt = ToCanvasPoint(e.GetPosition(this));
+            var name   = System.IO.Path.GetFileNameWithoutExtension(imagePath);
+            _vm.LayerPanel.AddReferenceLayer(source, name, dropPt.X, dropPt.Y);
+            e.Handled = true;
+        }
+        catch (Exception ex)
+        {
+            Services.Logger.Error("OnImageDrop: 参照レイヤー作成失敗", ex);
+        }
     }
 }

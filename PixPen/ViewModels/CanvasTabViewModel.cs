@@ -177,7 +177,18 @@ public class CanvasTabViewModel : ViewModelBase
             // レイヤーを下から合成
             foreach (var layer in Enumerable.Reverse(Document.Layers))
             {
-                if (!layer.IsVisible || layer.Bitmap == null) continue;
+                if (!layer.IsVisible) continue;
+
+                // 参照レイヤー（ReferenceSource を変換してキャンバスに描画）
+                if (layer.IsReference)
+                {
+                    FileService.CompositeReferenceLayer(
+                        layer, dstPtr, dstStride,
+                        Document.Width, Document.Height, dirtyRect);
+                    continue;
+                }
+
+                if (layer.Bitmap == null) continue;
                 layer.Bitmap.Lock();
                 byte* srcPtr = (byte*)layer.Bitmap.BackBuffer;
                 int srcStride = layer.Bitmap.BackBufferStride;

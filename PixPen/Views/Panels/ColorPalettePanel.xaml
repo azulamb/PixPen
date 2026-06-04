@@ -70,16 +70,32 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Button Width="26" Height="26" Margin="2,1"
-                                    Style="{StaticResource SwatchButtonStyle}"
-                                    Command="{Binding DataContext.ColorPanel.SelectColorCommand,
-                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                    CommandParameter="{Binding}"
-                                    ToolTip="{Binding}">
-                                <Button.Background>
-                                    <SolidColorBrush Color="{Binding}"/>
-                                </Button.Background>
-                            </Button>
+                            <!-- Grid でボタンと選択インジケーターを重ねる -->
+                            <Grid Width="26" Height="26" Margin="2,1">
+                                <Button Style="{StaticResource SwatchButtonStyle}"
+                                        Command="{Binding DataContext.ColorPanel.SelectColorCommand,
+                                            RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        ToolTip="{Binding}">
+                                    <Button.Background>
+                                        <SolidColorBrush Color="{Binding}"/>
+                                    </Button.Background>
+                                </Button>
+
+                                <!-- 選択中インジケーター：アクセントカラーの内枠 -->
+                                <Border IsHitTestVisible="False"
+                                        BorderBrush="{DynamicResource App.Accent}"
+                                        BorderThickness="2"
+                                        CornerRadius="1">
+                                    <Border.Visibility>
+                                        <MultiBinding Converter="{StaticResource ColorMatchConverter}">
+                                            <Binding/>
+                                            <Binding Path="DataContext.ColorPanel.Foreground"
+                                                     RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                        </MultiBinding>
+                                    </Border.Visibility>
+                                </Border>
+                            </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
@@ -187,6 +203,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="14"/>
@@ -217,6 +234,18 @@
                                 Value="{Binding ColorPanel.Alpha}" Margin="2,1" VerticalAlignment="Center"/>
                         <TextBox Grid.Row="3" Grid.Column="2" FontSize="10" Margin="2,1"
                                  Text="{Binding ColorPanel.Alpha, UpdateSourceTrigger=LostFocus}"/>
+
+                        <!-- HEX カラーコード（AARRGGBB形式、スライダーと双方向連動） -->
+                        <TextBlock Grid.Row="4" Text="#" VerticalAlignment="Center" FontSize="10"/>
+                        <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"
+                                 FontSize="10" Margin="2,3,2,1"
+                                 FontFamily="Consolas, Courier New, monospace"
+                                 CharacterCasing="Upper"
+                                 MaxLength="8"
+                                 ToolTip="カラーコード（AARRGGBB）。6 桁で入力すると A は現在値を維持します。"
+                                 Text="{Binding ColorPanel.HexCode,
+                                     UpdateSourceTrigger=PropertyChanged,
+                                     Mode=TwoWay}"/>
                     </Grid>
                 </TabItem>
 

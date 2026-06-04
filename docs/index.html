@@ -6,43 +6,65 @@
     <meta name="description" content="PixPen is a simple drawing application.">
     <link rel="shortcut icon" href="./favicon.ico">
     <style>
+      :root {
+        --main-back: #f0f0f0;
+        --main-front: #1e1e1e;
+        --link-color: #3670db;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --main-back: #1e1e1e;
+          --main-front: #d4d4d4;
+        }
+      }
+      * {
+        margin: 0;
+        padding: 0;
+      }
       html {
         height: 100%;
         font-size: 3vmin;
       }
       body {
         height: 100%;
-        margin: 0;
+        background: var(--main-back);
+        color: var(--main-front);
         display: grid;
-        grid-template-rows: 4rem auto 2rem;
+        grid-template-rows: 4rem auto 1rem;
+        gap: 1.2rem;
       }
       header {
         box-sizing: border-box;
         margin: 1rem 0 0;
-        background: url(./icon.svg) center center no-repeat;
+        background: url(./icon.svg) center center / contain no-repeat;
       }
       h1, h2 {
         margin: 0;
         padding: 0;
       }
       h1 {
-        font-size: 1rem;
-        line-height: 2rem;
+        font-size: 1.5em;
         text-align: center;
+        line-height: 2rem;
       }
-      article {
+      h2 {
+        font-size: 1.2em;
+        text-align: center;
+        font-weight: normal;
+        margin-top: 0.8rem;
+      }
+      body > article {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
         gap: 0.4rem;
+        width: 98%;
+        max-width: 30rem;
+        margin: 0 auto;
       }
-      article > * {
-        max-width: 22rem;
-      }
-      ul, dl {
-        padding: 0;
-        margin: 0;
+      body > article > * {
+        max-width: 100%;
       }
       ul {
         display: flex;
@@ -51,24 +73,42 @@
       }
       footer {
         text-align: center;
+        line-height: 0.6rem;
+      }
+      small {
+        font-size: 0.6em;
+      }
+      a {
+        color: var(--link-color);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
       }
       dialog {
         border: none;
         padding: 0;
+        margin: auto;
         background: transparent;
+        outline: none;
       }
       dialog::backdrop {
         background: rgba(0, 0, 0, 0.5);
       }
-      img {
+      picture, img {
         display: block;
+        width: 100%;
       }
       img.preview {
         cursor: zoom-in;
       }
-      p {
-        margin: 0;
-        padding: 0;
+      dt {
+        text-align: center;
+        font-size: 0.8em;
+        border-bottom: 1px solid var(--main-front);
+      }
+      dd {
+        margin-bottom: 0.4rem;
       }
     </style>
     <script>
@@ -83,7 +123,7 @@
             if (preview.open) {
               preview.close();
             } else {
-              const clone = img.cloneNode();
+              const clone = img.cloneNode(true);
               clone.style.width = "100%";
               clone.style.height = "100%";
               clone.classList.remove("preview");
@@ -110,7 +150,10 @@
       <p>
         アンチエイリアスなしのイラストを描けます。完全に個人のイラスト練習用なので機能は多くない代わりに軽量に動きます。
       </p>
-      <img src="./ss.png" alt="A screenshot of PixPen" class="preview">
+      <picture class="preview">
+        <source srcset="./ss.png" media="(prefers-color-scheme: dark)">
+        <img src="./ss.png" alt="A screenshot of PixPen">
+      </picture>
       <h2>動作環境</h2>
       <dl>
         <dt>OS</dt>
@@ -122,7 +165,7 @@
       </dl>
     </article>
     <footer>
-      <small>&copy; 2026 Hiroki. All rights reserved.</small>
+      <small>&copy; 2026 Hiroki.</small>
     </footer>
     <dialog id="preview"></dialog>
   </body>
