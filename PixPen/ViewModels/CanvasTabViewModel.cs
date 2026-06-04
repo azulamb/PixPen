@@ -117,7 +117,9 @@ public class CanvasTabViewModel : ViewModelBase
 
     // ─── コンストラクタ ─────────────────────────────────────────────────────
 
-    public CanvasTabViewModel(Document document, UndoRedoService undoRedo, int maxLayers)
+    public CanvasTabViewModel(
+        Document document, UndoRedoService undoRedo, int maxLayers,
+        AppSettings? settings = null, Action? saveSettings = null)
     {
         Document = document;
         UndoRedo = undoRedo;
@@ -139,7 +141,11 @@ public class CanvasTabViewModel : ViewModelBase
         };
 
         LayerPanel = new LayerPanelViewModel(this);
-        ColorPanel = new ColorPalettePanelViewModel(document.Palette);
+        ColorPanel = new ColorPalettePanelViewModel(
+            document.Palette,
+            onPaletteModified: () => { Document.IsModified = true; RefreshTitle(); },
+            settings: settings,
+            saveSettings: saveSettings);
         PenPanel = new PenPalettePanelViewModel(document.Pens);
 
         // ペンツールに色パレットの筆圧カーブを同期

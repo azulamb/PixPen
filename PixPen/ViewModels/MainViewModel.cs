@@ -164,6 +164,23 @@ public class MainViewModel : ViewModelBase
             Dpi = Settings.DefaultDpi,
             Title = "Untitled"
         };
+
+        // デフォルトパレットを適用（設定されている場合）
+        if (!string.IsNullOrEmpty(Settings.DefaultPaletteName))
+        {
+            var preset = new Services.PaletteService().Load(Settings.DefaultPaletteName);
+            if (preset.Colors.Count > 0)
+            {
+                doc.Palette.Colors.Clear();
+                foreach (var hex in preset.Colors) doc.Palette.Colors.Add(hex);
+                if (preset.ForegroundColor != null)
+                    doc.Palette.ForegroundColor = preset.ForegroundColor;
+                // BackgroundColor: 明示値 → Colors[0] → デフォルトの順で使用
+                doc.Palette.BackgroundColor =
+                    preset.BackgroundColor  ?? // 新形式（Colors[0] を BackgroundColor として保存）
+                    (preset.Colors.Count > 0 ? preset.Colors[0] : doc.Palette.BackgroundColor);
+            }
+        }
         // 1 枚目のレイヤーはパレットの背景色で塗りつぶす
         var layer = new Layer
         {
@@ -186,12 +203,11 @@ public class MainViewModel : ViewModelBase
         {
             MemoryLimitBytes = Settings.UndoMemoryLimitMb * 1024L * 1024L
         };
-        var tab = new CanvasTabViewModel(doc, undoRedo, Settings.MaxLayers)
+        var tab = new CanvasTabViewModel(doc, undoRedo, Settings.MaxLayers,
+            settings: Settings, saveSettings: () => _settingsService.Save(Settings))
         {
             TabletService = TabletServiceFactory.Create(Settings)
         };
-        // PenTool が Settings と同じ PressureCurve インスタンスを参照するようにする。
-        // これにより、設定ダイアログでのスライダー操作が次のストロークから即時反映される。
         tab.PenTool.PressureCurve = Settings.PressureCurve;
         tab.PropertyChanged += (_, _) => OnPropertyChanged(nameof(StatusText));
         Tabs.Add(tab);

@@ -118,7 +118,7 @@
                               ItemsSource="{Binding ColorPanel.PresetNames}"
                               FontSize="9" Height="20" Margin="0,0,0,2"
                               ToolTip="プリセット名を入力または選択"/>
-                    <!-- 読込 / 保存 / 削除 -->
+                    <!-- 読込 / 保存 / 削除 / デフォルト設定 -->
                     <UniformGrid Rows="1">
                         <Button Command="{Binding ColorPanel.LoadPresetCommand}"
                                 ToolTip="選択したプリセットを読み込む"
@@ -126,7 +126,7 @@
                             <iconPacks:PackIconMaterial Kind="FolderOpen" Width="12" Height="12"/>
                         </Button>
                         <Button Command="{Binding ColorPanel.SavePresetCommand}"
-                                ToolTip="現在のパレットをプリセットとして保存"
+                                ToolTip="現在のパレットをプリセットとして保存（基本パレットは保存不可）"
                                 Height="22" Padding="2">
                             <iconPacks:PackIconMaterial Kind="ContentSave" Width="12" Height="12"/>
                         </Button>
@@ -134,6 +134,23 @@
                                 ToolTip="選択したプリセットを削除"
                                 Height="22" Padding="2">
                             <iconPacks:PackIconMaterial Kind="TrashCanOutline" Width="12" Height="12"/>
+                        </Button>
+                        <!-- デフォルト設定：現在デフォルトなら塗りつぶし星、そうでなければ空星 -->
+                        <Button Command="{Binding ColorPanel.SetAsDefaultCommand}"
+                                ToolTip="このプリセットを起動時のデフォルトパレットに設定する"
+                                Height="22" Padding="2">
+                            <iconPacks:PackIconMaterial Width="12" Height="12">
+                                <iconPacks:PackIconMaterial.Style>
+                                    <Style TargetType="iconPacks:PackIconMaterial">
+                                        <Setter Property="Kind" Value="StarOutline"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ColorPanel.IsCurrentDefault}" Value="True">
+                                                <Setter Property="Kind" Value="Star"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </iconPacks:PackIconMaterial.Style>
+                            </iconPacks:PackIconMaterial>
                         </Button>
                     </UniformGrid>
                 </StackPanel>

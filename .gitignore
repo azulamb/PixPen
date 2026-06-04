@@ -36,3 +36,5 @@ $RECYCLE.BIN/
 
 # Publish output
 publish/
+
+tmp/

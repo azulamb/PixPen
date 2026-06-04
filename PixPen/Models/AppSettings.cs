@@ -29,6 +29,8 @@ public class AppSettings
     public int DefaultHeight { get; set; } = 1000;
     public PressureCurveSettings PressureCurve { get; set; } = new();
     public AppTheme Theme { get; set; } = AppTheme.System;
+    /// <summary>起動時に自動適用するパレットプリセット名（空 = 基本パレット）</summary>
+    public string DefaultPaletteName { get; set; } = "";
     public List<PanelLayoutInfo> PanelLayouts { get; set; } = CreateDefaultLayouts();
 
     public static List<PanelLayoutInfo> CreateDefaultLayouts() => new()
