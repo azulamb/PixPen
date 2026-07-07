@@ -1,0 +1,385 @@
+:root {
+  --bg: #f0f0f0;
+  --fg: #1e1e1e;
+  --panel-bg: #ffffff;
+  --border: #c8c8c8;
+  --accent: #3670db;
+  --danger: #d9534f;
+  --input-bg: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1e1e1e;
+    --fg: #d4d4d4;
+    --panel-bg: #262626;
+    --border: #3a3a3a;
+    --accent: #5b8def;
+    --input-bg: #2f2f2f;
+  }
+}
+
+/* Explicit theme override (AppSettings.theme = Light/Dark) takes precedence over prefers-color-scheme. */
+:root[data-theme="light"] {
+  --bg: #f0f0f0;
+  --fg: #1e1e1e;
+  --panel-bg: #ffffff;
+  --border: #c8c8c8;
+  --accent: #3670db;
+  --input-bg: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  --bg: #1e1e1e;
+  --fg: #d4d4d4;
+  --panel-bg: #262626;
+  --border: #3a3a3a;
+  --accent: #5b8def;
+  --input-bg: #2f2f2f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+body {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+}
+
+header.app-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+header.app-header h1 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+header.app-header a {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.8rem;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.toolbar .sep {
+  width: 1px;
+  height: 1.4rem;
+  background: var(--border);
+  margin: 0 0.3rem;
+}
+
+.tool-group {
+  display: flex;
+  gap: 0.2rem;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+button.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+button.primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.tool-btn,
+.icon-btn {
+  min-width: 2rem;
+  text-align: center;
+}
+
+.zoom-label {
+  margin-left: auto;
+  font-size: 0.85rem;
+  opacity: 0.8;
+  padding-right: 0.5rem;
+}
+
+.app-body {
+  display: grid;
+  grid-template-columns: 220px 1fr 260px;
+  min-height: 0;
+}
+
+.canvas-area {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.canvas-area canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  image-rendering: pixelated;
+}
+
+.side-panel {
+  overflow-y: auto;
+  border-color: var(--border);
+  background: var(--panel-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.side-panel.left {
+  border-right: 1px solid var(--border);
+}
+
+.side-panel.right {
+  border-left: 1px solid var(--border);
+}
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.4rem;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.layer-row,
+.pen-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.layer-row.active,
+.pen-row.active {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.layer-icon-btn {
+  min-width: 1.6rem;
+  padding: 0.1rem 0.3rem;
+}
+
+.layer-icon-btn.danger,
+.swatch-remove {
+  color: var(--danger);
+}
+
+.layer-name {
+  flex: 1;
+  min-width: 0;
+  background: var(--input-bg);
+  color: inherit;
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+
+.layer-opacity {
+  width: 3rem;
+  background: var(--input-bg);
+  color: inherit;
+  border: 1px solid var(--border);
+}
+
+.ref-badge {
+  font-size: 0.65rem;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 3px;
+  padding: 0 0.2rem;
+}
+
+.fgbg-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.fgbg-swatch {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 4px;
+  padding: 0;
+}
+
+.fgbg-swatch.selected {
+  outline: 2px solid var(--accent);
+}
+
+.hex-input,
+input[type="text"],
+input[type="number"],
+select {
+  background: var(--input-bg);
+  color: inherit;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.15rem 0.3rem;
+  width: 100%;
+}
+
+.sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0.4rem 0;
+}
+
+.slider-row {
+  display: grid;
+  grid-template-columns: 1.2rem 1fr 2.2rem;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+}
+
+.slider-row input[type="range"] {
+  width: 100%;
+}
+
+.swatch-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+}
+
+.swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.25rem;
+  margin: 0.3rem 0;
+}
+
+.swatch {
+  position: relative;
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0;
+}
+
+.swatch-remove {
+  position: absolute;
+  top: -0.4rem;
+  right: -0.4rem;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 1rem;
+  height: 1rem;
+  font-size: 0.65rem;
+  line-height: 1rem;
+  text-align: center;
+}
+
+.preset-row {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+}
+
+.preset-row select {
+  flex: 1;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 8rem 1fr;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.3rem 0;
+}
+
+.pen-editor .field-row {
+  grid-template-columns: 7rem 1fr;
+}
+
+.app-dialog {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  background: var(--panel-bg);
+  color: var(--fg);
+  min-width: 20rem;
+}
+
+.app-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.app-dialog fieldset {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  margin-top: 0.8rem;
+}
+
+.status-bar {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border-top: 1px solid var(--border);
+  opacity: 0.8;
+}

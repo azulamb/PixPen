@@ -1,0 +1,11 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@azulamb/zipper@0.1": "0.1.0"
+  },
+  "jsr": {
+    "@azulamb/zipper@0.1.0": {
+      "integrity": "e5abd0a8c2519648b754155432ddf613f4102b19c108b82936078ea3a0d214d8"
+    }
+  }
+}

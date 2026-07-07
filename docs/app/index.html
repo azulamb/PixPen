@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>PixPen Web</title>
+    <meta name="description"
+      content="PixPen is a simple drawing application (Web version).">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="../favicon.ico">
+    <link rel="stylesheet" href="./app.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>PixPen</h1>
+      <a href="../index.html">&larr; About</a>
+    </header>
+    <div id="toolbar-slot"></div>
+    <div class="app-body">
+      <div id="left-panel" class="side-panel left"></div>
+      <div id="canvas-area" class="canvas-area">
+        <canvas id="view-canvas"></canvas>
+      </div>
+      <div id="right-panel" class="side-panel right"></div>
+    </div>
+    <div id="status-bar" class="status-bar"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>

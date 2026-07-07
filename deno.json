@@ -1,10 +1,15 @@
 {
   "tasks": {
     "build:debug": "dotnet build PixPen/PixPen.csproj",
+    "build:web": "deno bundle --minimum-dependency-age=0 --minify src/main.ts -o docs/app/app.js",
     "publish": "deno run --allow-run --allow-read --allow-write publish.ts"
   },
+  "compilerOptions": {
+    "lib": ["deno.ns", "dom", "dom.iterable", "esnext"],
+    "types": ["./types/file-system-access.d.ts"]
+  },
   "fmt": {
-    "include": ["./docs", "./publish.ts"],
-    "exclude": ["./docs/icon.svg", "./docs/version.json"]
+    "include": ["./docs", "./src", "./types", "./publish.ts"],
+    "exclude": ["./docs/icon.svg", "./docs/version.json", "./docs/app/app.js"]
   }
 }
