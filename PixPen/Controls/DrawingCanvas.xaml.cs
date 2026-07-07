@@ -647,8 +647,8 @@ public partial class DrawingCanvas : UserControl
 
     /// <summary>
     /// StylusEventArgs からキャンバス座標・筆圧・消しゴムフラグを取得する。
-    /// App.xaml.cs で EnablePointerSupport = true にしているため、
-    /// WM_POINTER 経由の正確な筆圧が PressureFactor に格納される。
+    /// EnablePointerSupport は無効化しているため、これは WISP 経由の PressureFactor
+    /// (低優先度フォールバック。優先されるのは ResolvePressure の WMP/WinTab 経路)。
     /// </summary>
     private (Point canvasPoint, double pressure, bool isEraser) ExtractStylusInfo(StylusEventArgs e)
     {

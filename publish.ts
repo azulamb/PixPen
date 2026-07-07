@@ -15,7 +15,6 @@ const build = await new Deno.Command("dotnet", {
     "--self-contained",
     "false",
     "/p:PublishSingleFile=true",
-    "/p:EnableCompressionInSingleFile=true",
     "-o",
     OUT_DIR,
   ],

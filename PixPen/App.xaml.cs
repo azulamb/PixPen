@@ -69,7 +69,8 @@ public partial class App : Application
     private static void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         Logger.Error("Unhandled UI exception", e.Exception);
-        // クラッシュを防いで続行（必要に応じて e.Handled = true のまま）
+        // e.Handled を立てないと例外がそのまま AppDomain まで伝播しプロセスごと落ちる
+        e.Handled = true;
     }
 
     private static void OnDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -90,8 +91,12 @@ public partial class App : Application
 
     static App()
     {
-        // Cintiq など WM_POINTER ベースのデバイス向け（将来の互換性のため維持）
-        AppContext.SetSwitch("Switch.System.Windows.Input.Stylus.EnablePointerSupport", true);
+        // WPF の WM_POINTER ベース内部実装（StylusPointer.PointerLogic）には
+        // 2 ストローク目以降で PromotePreviewToMain が NullReferenceException を投げ
+        // アプリごと落ちる既知の不具合があるため無効のままにする。
+        // 筆圧取得は DrawingCanvas 側で ComponentDispatcher.ThreadFilterMessage 経由の
+        // 生 WM_POINTER 読み取り（PointerNative）で行っており、このスイッチに依存しない。
+        AppContext.SetSwitch("Switch.System.Windows.Input.Stylus.EnablePointerSupport", false);
 
         EventManager.RegisterClassHandler(typeof(UIElement), Stylus.StylusDownEvent,
             new StylusDownEventHandler(OnGlobalStylusDown), handledEventsToo: true);
